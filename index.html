@@ -114,165 +114,196 @@
     </div>
 
     <script>
-        lucide.createIcons();
-        let demandas = [];
-        let historico = [];
-        let sortOrder = { key: 'sla', direction: 'desc' };
+    const API_URL = "https://sla-api.brunodalolio88.workers.dev"; // <--- COLOQUE SUA URL AQUI
 
-        const colunas = [
-            { key: 'sla', label: 'SLA' },
-            { key: 'reqc', label: 'ReqC' },
-            { key: 'item', label: 'Item' },
-            { key: 'nome', label: 'Nome Requisitante' },
-            { key: 'ws', label: 'WS' },
-            { key: 'subtipo', label: 'Subtipo' },
-            { key: 'texto', label: 'Texto Breve' },
-            { key: 'vunit', label: 'V. Unitário', align: 'text-right' },
-            { key: 'vtotal', label: 'V. Total RC', align: 'text-right' },
-            { key: 'observacao', label: 'Observações' }
-        ];
+    lucide.createIcons();
+    let demandas = [];
+    let historico = [];
+    let sortOrder = { key: 'sla', direction: 'desc' };
 
-        function maskMoney(c) {
-            let v = c.value.replace(/\D/g, "");
-            v = (v / 100).toFixed(2) + "";
-            v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
-            c.value = v ? "R$ " + v : "";
-        }
-        function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
-        function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
-
-        function sortData(key) {
-            sortOrder.direction = (sortOrder.key === key && sortOrder.direction === 'asc') ? 'desc' : 'asc';
-            sortOrder.key = key;
-            const sortFn = (a, b) => {
-                let valA = (key === 'sla') ? calcularSlaAtual(a) : a[key];
-                let valB = (key === 'sla') ? calcularSlaAtual(b) : b[key];
-                if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
-                return sortOrder.direction === 'asc' ? (valA < valB ? -1 : 1) : (valA > valB ? -1 : 1);
-            };
-            demandas.sort(sortFn);
-            historico.sort(sortFn);
+    // FUNÇÃO PARA CARREGAR DADOS DO BANCO D1
+    async function loadFromD1() {
+        try {
+            const response = await fetch(`${API_URL}/list`);
+            const data = await response.json();
+            // Separa o que é ativo do que é histórico baseado no status_final
+            demandas = data.filter(d => !d.status_final);
+            historico = data.filter(d => d.status_final);
             render();
+        } catch (e) {
+            console.error("Erro ao carregar dados:", e);
         }
+    }
 
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const rows = XLSX.utils.sheet_to_json(XLSX.read(evt.target.result, { type: 'binary' }).Sheets[XLSX.read(evt.target.result, { type: 'binary' }).SheetNames[0]]);
-                const hoje = new Date().setHours(0,0,0,0);
-                rows.forEach(n => {
-                    const id = String(n.ReqC || n.reqc || '');
-                    if (!demandas.some(d => d.reqc === id) && !historico.some(h => h.reqc === id)) {
-                        demandas.push({
-                            sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: id, item: n.Item || '',
-                            nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '',
-                            texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, vtotal: n['Valor Total RC'] || 0,
-                            observacao: n.Observações || ''
-                        });
-                    }
-                });
-                render();
-            };
-            reader.readAsBinaryString(e.target.files[0]);
+    // FUNÇÃO PARA SALVAR NO BANCO D1
+    async function saveToD1(item) {
+        try {
+            await fetch(`${API_URL}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+        } catch (e) {
+            alert("Erro ao salvar no banco de dados!");
+        }
+    }
+
+    const colunas = [
+        { key: 'sla', label: 'SLA' },
+        { key: 'reqc', label: 'ReqC' },
+        { key: 'item', label: 'Item' },
+        { key: 'nome', label: 'Nome Requisitante' },
+        { key: 'ws', label: 'WS' },
+        { key: 'subtipo', label: 'Subtipo' },
+        { key: 'texto', label: 'Texto Breve' },
+        { key: 'vunit', label: 'V. Unitário', align: 'text-right' },
+        { key: 'vtotal', label: 'V. Total RC', align: 'text-right' },
+        { key: 'observacao', label: 'Observações' }
+    ];
+
+    function maskMoney(c) {
+        let v = c.value.replace(/\D/g, "");
+        v = (v / 100).toFixed(2) + "";
+        v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        c.value = v ? "R$ " + v : "";
+    }
+    
+    function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+    function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
+
+    function renderHeaders() {
+        const html = colunas.map(c => `<th class="p-3 ${c.align || ''}" onclick="sortData('${c.key}')">${c.label} <i data-lucide="arrow-up-down" class="sort-icon"></i></th>`).join('') + '<th class="p-3 text-center">Ações</th>';
+        document.getElementById('header-principal').innerHTML = html;
+        document.getElementById('header-historico').innerHTML = `<th class="p-2">Status</th>` + html;
+    }
+
+    function calcularSlaAtual(item) {
+        if (item.sla_no_fim !== undefined) return item.sla_no_fim;
+        const dias = Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000);
+        return parseInt(item.sla_inicial) + dias;
+    }
+
+    async function setStatus(idx, s) {
+        let item = demandas[idx];
+        item.status_final = s;
+        item.sla_no_fim = calcularSlaAtual(item);
+        await saveToD1(item);
+        loadFromD1(); // Recarrega do banco
+    }
+
+    async function reativar(idx) {
+        let item = historico[idx];
+        item.data_referencia = new Date().setHours(0,0,0,0);
+        item.sla_inicial = item.sla_no_fim;
+        delete item.sla_no_fim;
+        delete item.status_final;
+        await saveToD1(item);
+        loadFromD1();
+    }
+
+    function render() {
+        renderHeaders();
+        const busca = document.getElementById('inputBusca').value.toLowerCase();
+        const corpo = document.getElementById('tabela-corpo');
+        const histBody = document.getElementById('tabela-historico');
+        corpo.innerHTML = ""; histBody.innerHTML = "";
+        let c = { v: 0, a: 0, r: 0 };
+
+        demandas.forEach((d, idx) => {
+            if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
+            const sla = calcularSlaAtual(d);
+            let cor = sla > 30 ? "bg-red-100 text-red-700" : (sla > 15 ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700");
+            if (sla > 30) c.r++; else if (sla > 15) c.a++; else c.v++;
+
+            corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b">
+                <td class="p-3"><span class="px-2 py-1 rounded font-black border ${cor}">${sla}d</span></td>
+                <td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td>
+                <td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td>
+                <td class="p-3 col-texto-breve">${d.texto}</td><td class="p-3 text-right">${fmtMoeda(d.vunit)}</td>
+                <td class="p-3 text-right font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-800">${d.observacao}</td>
+                <td class="p-3 flex gap-1 justify-center">
+                    <button onclick="setStatus(${idx}, 'Concluído')" class="p-1.5 text-green-600 hover:bg-green-100 rounded"><i data-lucide="check" class="w-3 h-3"></i></button>
+                    <button onclick="setStatus(${idx}, 'Cancelado')" class="p-1.5 text-red-600 hover:bg-red-100 rounded"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                    <button onclick="openEdit(${idx})" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded"><i data-lucide="edit" class="w-3 h-3"></i></button>
+                </td></tr>`;
         });
 
-        function calcularSlaAtual(item) {
-            if (item.sla_no_fim !== undefined) return item.sla_no_fim;
-            const dias = Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000);
-            return parseInt(item.sla_inicial) + dias;
-        }
+        historico.forEach((h, idx) => {
+            const sla = h.sla_no_fim;
+            const corStatus = h.status_final === 'Concluído' ? 'text-green-600' : 'text-gray-400';
+            histBody.innerHTML += `<tr class="border-b bg-white">
+                <td class="p-2 font-black uppercase text-[8px] ${corStatus}">${h.status_final}</td>
+                <td class="p-2"><span class="px-1 py-0.5 rounded font-bold border bg-gray-100 text-gray-600">${sla}d</span></td>
+                <td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td>
+                <td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2 col-texto-breve text-[9px]">${h.texto}</td>
+                <td class="p-2 text-right">${fmtMoeda(h.vunit)}</td><td class="p-2 text-right font-bold">${fmtMoeda(h.vtotal)}</td>
+                <td class="p-2 text-blue-800">${h.observacao}</td>
+                <td class="p-2 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-bold underline">Reativar</button></td></tr>`;
+        });
 
-        function setStatus(idx, s) {
-            let item = demandas.splice(idx, 1)[0];
-            item.status_final = s;
-            item.sla_no_fim = calcularSlaAtual(item);
-            historico.push(item);
-            render();
-        }
+        document.getElementById('count-verde').innerText = c.v;
+        document.getElementById('count-amarelo').innerText = c.a;
+        document.getElementById('count-vermelho').innerText = c.r;
+        lucide.createIcons();
+    }
 
-        function renderHeaders() {
-            const html = colunas.map(c => `<th class="p-3 ${c.align || ''}" onclick="sortData('${c.key}')">${c.label} <i data-lucide="arrow-up-down" class="sort-icon"></i></th>`).join('') + '<th class="p-3 text-center">Ações</th>';
-            document.getElementById('header-principal').innerHTML = html;
-            document.getElementById('header-historico').innerHTML = `<th class="p-2">Status</th>` + html;
-        }
-
-        function render() {
-            renderHeaders();
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
-            const corpo = document.getElementById('tabela-corpo');
-            const histBody = document.getElementById('tabela-historico');
-            corpo.innerHTML = ""; histBody.innerHTML = "";
-            let c = { v: 0, a: 0, r: 0 };
-
-            demandas.forEach((d, idx) => {
-                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
-                const sla = calcularSlaAtual(d);
-                let cor = sla > 30 ? "bg-red-100 text-red-700" : (sla > 15 ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700");
-                if (sla > 30) c.r++; else if (sla > 15) c.a++; else c.v++;
-
-                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b">
-                    <td class="p-3"><span class="px-2 py-1 rounded font-black border ${cor}">${sla}d</span></td>
-                    <td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td>
-                    <td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td>
-                    <td class="p-3 col-texto-breve">${d.texto}</td><td class="p-3 text-right">${fmtMoeda(d.vunit)}</td>
-                    <td class="p-3 text-right font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-800">${d.observacao}</td>
-                    <td class="p-3 flex gap-1 justify-center">
-                        <button onclick="setStatus(${idx}, 'Concluído')" class="p-1.5 text-green-600 hover:bg-green-100 rounded"><i data-lucide="check" class="w-3 h-3"></i></button>
-                        <button onclick="setStatus(${idx}, 'Cancelado')" class="p-1.5 text-red-600 hover:bg-red-100 rounded"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                        <button onclick="openEdit(${idx})" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded"><i data-lucide="edit" class="w-3 h-3"></i></button>
-                    </td></tr>`;
-            });
-
-            historico.forEach((h, idx) => {
-                const sla = h.sla_no_fim;
-                const corStatus = h.status_final === 'Concluído' ? 'text-green-600' : 'text-gray-400';
-                histBody.innerHTML += `<tr class="border-b bg-white">
-                    <td class="p-2 font-black uppercase text-[8px] ${corStatus}">${h.status_final}</td>
-                    <td class="p-2"><span class="px-1 py-0.5 rounded font-bold border bg-gray-100 text-gray-600">${sla}d</span></td>
-                    <td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td>
-                    <td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2 col-texto-breve text-[9px]">${h.texto}</td>
-                    <td class="p-2 text-right">${fmtMoeda(h.vunit)}</td><td class="p-2 text-right font-bold">${fmtMoeda(h.vtotal)}</td>
-                    <td class="p-2 text-blue-800">${h.observacao}</td>
-                    <td class="p-2 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-bold underline">Reativar</button></td></tr>`;
-            });
-
-            document.getElementById('count-verde').innerText = c.v;
-            document.getElementById('count-amarelo').innerText = c.a;
-            document.getElementById('count-vermelho').innerText = c.r;
-            lucide.createIcons();
-        }
-
-        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('formModal').classList.remove('hidden'); }
-        function openEdit(idx) {
-            const d = demandas[idx]; document.getElementById('editIndex').value = idx;
-            document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc;
-            document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item;
-            document.getElementById('f-nome').value = d.nome; document.getElementById('f-ws').value = d.ws;
-            document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-texto').value = d.texto;
-            document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal);
-            document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden');
-        }
-        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
-        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
-        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
-        function reativar(idx) { let item = historico.splice(idx, 1)[0]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; demandas.push(item); render(); }
-
-        document.getElementById('demandaForm').onsubmit = (e) => {
-            e.preventDefault();
-            const idx = document.getElementById('editIndex').value;
-            const data = {
-                sla_inicial: document.getElementById('f-sla').value,
-                data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0),
-                reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value,
-                nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value,
-                subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value,
-                vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value),
-                observacao: document.getElementById('f-obs').value
-            };
-            if (idx !== "") demandas[idx] = data; else { if(demandas.some(d => d.reqc === data.reqc)) return alert("ReqC já existe!"); demandas.push(data); }
-            closeModal(); render();
+    // IMPORTAÇÃO DE PLANILHA
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const rows = XLSX.utils.sheet_to_json(XLSX.read(evt.target.result, { type: 'binary' }).Sheets[XLSX.read(evt.target.result, { type: 'binary' }).SheetNames[0]]);
+            const hoje = new Date().setHours(0,0,0,0);
+            for (const n of rows) {
+                const id = String(n.ReqC || n.reqc || '');
+                if (!demandas.some(d => d.reqc === id) && !historico.some(h => h.reqc === id)) {
+                    const nova = {
+                        sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: id, item: n.Item || '',
+                        nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '',
+                        texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, vtotal: n['Valor Total RC'] || 0,
+                        observacao: n.Observações || ''
+                    };
+                    await saveToD1(nova);
+                }
+            }
+            loadFromD1();
         };
-        render();
-    </script>
+        reader.readAsBinaryString(e.target.files[0]);
+    });
+
+    document.getElementById('demandaForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const idx = document.getElementById('editIndex').value;
+        const data = {
+            sla_inicial: document.getElementById('f-sla').value,
+            data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0),
+            reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value,
+            nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value,
+            subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value,
+            vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value),
+            observacao: document.getElementById('f-obs').value
+        };
+        await saveToD1(data);
+        closeModal();
+        loadFromD1();
+    };
+
+    function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('formModal').classList.remove('hidden'); }
+    function openEdit(idx) {
+        const d = demandas[idx]; document.getElementById('editIndex').value = idx;
+        document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc;
+        document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item;
+        document.getElementById('f-nome').value = d.nome; document.getElementById('f-ws').value = d.ws;
+        document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-texto').value = d.texto;
+        document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal);
+        document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden');
+    }
+    function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
+    function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
+    function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+
+    // INICIALIZAÇÃO
+    loadFromD1();
+</script>
 </body>
+
 </html>
