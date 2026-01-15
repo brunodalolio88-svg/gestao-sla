@@ -13,7 +13,6 @@
         th { cursor: pointer; transition: background-color 0.2s; position: relative; }
         th:hover { background-color: #f1f5f9; }
         .sort-icon { display: inline-block; width: 12px; height: 12px; margin-left: 4px; color: #94a3b8; }
-        .tab-scroll { max-height: 70vh; overflow-y: auto; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans text-[11px]">
@@ -42,18 +41,26 @@
     </nav>
 
     <main class="container mx-auto p-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-green-500 flex justify-between items-center">
-                <span class="font-bold text-gray-400 uppercase italic">No Prazo (0-15)</span>
-                <span id="count-verde" class="text-2xl font-black text-green-600">0</span>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+            <div class="bg-white p-3 rounded shadow-sm border-l-4 border-green-500 flex justify-between items-center">
+                <span class="font-bold text-gray-400 uppercase italic">0-15 d</span>
+                <span id="count-15" class="text-xl font-black text-green-600">0</span>
             </div>
-            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center">
-                <span class="font-bold text-gray-400 uppercase italic">Atenção (16-30)</span>
-                <span id="count-amarelo" class="text-2xl font-black text-yellow-600">0</span>
+            <div class="bg-white p-3 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center">
+                <span class="font-bold text-gray-400 uppercase italic">16-30 d</span>
+                <span id="count-30" class="text-xl font-black text-yellow-600">0</span>
             </div>
-            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center">
-                <span class="font-bold text-gray-400 uppercase italic">Crítico (>30)</span>
-                <span id="count-vermelho" class="text-2xl font-black text-red-600">0</span>
+            <div class="bg-white p-3 rounded shadow-sm border-l-4 border-orange-400 flex justify-between items-center">
+                <span class="font-bold text-gray-400 uppercase italic">31-60 d</span>
+                <span id="count-60" class="text-xl font-black text-orange-500">0</span>
+            </div>
+            <div class="bg-white p-3 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center">
+                <span class="font-bold text-gray-400 uppercase italic">61-90 d</span>
+                <span id="count-90" class="text-xl font-black text-red-600">0</span>
+            </div>
+            <div class="bg-white p-3 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center">
+                <span class="font-bold text-gray-400 uppercase italic">91+ d</span>
+                <span id="count-91" class="text-xl font-black text-purple-700">0</span>
             </div>
         </div>
 
@@ -61,7 +68,7 @@
             <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
             <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
             <p class="font-bold text-gray-600 text-sm">Importar Planilha do Sistema</p>
-            <p class="text-[10px] text-gray-400 italic font-bold">Importante: Itens fora da planilha serão removidos do painel ativo.</p>
+            <p class="text-[10px] text-gray-400 italic">Sincroniza e remove itens fora da lista ativa.</p>
         </div>
 
         <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
@@ -84,15 +91,15 @@
                 <div><label class="font-bold text-gray-400 uppercase italic">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded"></div>
                 <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Nome do Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Nome Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded"></div>
                 <div class="md:col-span-4"><label class="font-bold text-gray-400 uppercase italic">Texto Breve</label><textarea id="f-texto" rows="2" class="w-full border p-2 rounded outline-none"></textarea></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">Valor Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">Valor Total RC</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-4"><label class="font-bold text-blue-600 uppercase italic underline">Minhas Observações (Editável)</label><textarea id="f-obs" rows="3" class="w-full border border-blue-200 bg-blue-50 p-2 rounded outline-none shadow-inner"></textarea></div>
+                <div class="md:col-span-4"><label class="font-bold text-blue-600 uppercase italic underline">Observações</label><textarea id="f-obs" rows="3" class="w-full border border-blue-200 bg-blue-50 p-2 rounded outline-none shadow-inner"></textarea></div>
                 <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-400 font-bold uppercase">Cancelar</button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-400 font-bold uppercase text-[10px]">Cancelar</button>
                     <button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase shadow-lg">Salvar Dados</button>
                 </div>
             </form>
@@ -101,12 +108,10 @@
 
     <div id="archiveModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 z-50">
         <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-blue-900 uppercase">Histórico Completo de Itens Finalizados</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
+            <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-blue-900 uppercase">Histórico</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
             <div class="overflow-x-auto border rounded flex-grow bg-gray-50">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-200 text-slate-600 border-b uppercase font-bold sticky top-0">
-                        <tr id="header-historico"></tr>
-                    </thead>
+                    <thead class="bg-slate-200 text-slate-600 border-b uppercase font-bold sticky top-0"><tr id="header-historico"></tr></thead>
                     <tbody id="tabela-historico" class="divide-y divide-gray-200 text-gray-600 italic"></tbody>
                 </table>
             </div>
@@ -151,23 +156,16 @@
             });
         }
 
-        // LÓGICA DE IMPORTAÇÃO: LIMPA ATIVOS E ADICIONA NOVOS
         document.getElementById('fileInput').addEventListener('change', (e) => {
             const reader = new FileReader();
             reader.onload = async (evt) => {
-                const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const rows = XLSX.utils.sheet_to_json(XLSX.read(evt.target.result, { type: 'binary' }).Sheets[XLSX.read(evt.target.result, { type: 'binary' }).SheetNames[0]]);
                 const hoje = new Date().setHours(0,0,0,0);
-                
-                // 1. Limpa apenas os itens ATIVOS do banco (preserva o histórico)
                 await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
-
-                // 2. Sobe os novos itens da planilha
                 for (const n of rows) {
                     const rId = String(n.ReqC || n.reqc || '');
                     const iId = String(n.Item || n.item || '1');
                     if (!rId) continue;
-
                     await saveToD1({
                         sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: rId, item: iId,
                         nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '',
@@ -175,7 +173,7 @@
                         observacao: n.Observações || ''
                     });
                 }
-                alert("Importação Concluída: Painel atualizado conforme planilha.");
+                alert("Painel Atualizado com sucesso!");
                 loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
@@ -184,8 +182,12 @@
         function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v / 100).toFixed(2) + ""; v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
-        function calcularSlaAtual(item) { if (item.sla_no_fim !== undefined) return item.sla_no_fim; return parseInt(item.sla_inicial) + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
         
+        function calcularSlaAtual(item) { 
+            if (item.sla_no_fim !== undefined) return item.sla_no_fim; 
+            return parseInt(item.sla_inicial) + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); 
+        }
+
         function sortData(key) {
             sortOrder.direction = (sortOrder.key === key && sortOrder.direction === 'asc') ? 'desc' : 'asc';
             sortOrder.key = key;
@@ -210,13 +212,19 @@
             const corpo = document.getElementById('tabela-corpo');
             const histBody = document.getElementById('tabela-historico');
             corpo.innerHTML = ""; histBody.innerHTML = "";
-            let counts = { v: 0, a: 0, r: 0 };
+            let counts = { c15: 0, c30: 0, c60: 0, c90: 0, c91: 0 };
 
             demandas.forEach((d, idx) => {
                 if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
                 const sla = calcularSlaAtual(d);
-                let cor = sla > 30 ? "bg-red-100 text-red-700" : (sla > 15 ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700");
-                if (sla > 30) counts.r++; else if (sla > 15) counts.a++; else counts.v++;
+                
+                // NOVA LÓGICA DE CORES E CONTADORES
+                let cor = "";
+                if (sla > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (sla > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (sla > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+                else { cor = "bg-blue-100 text-blue-700"; counts.c15++; }
 
                 corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b">
                     <td class="p-3"><span class="px-2 py-1 rounded font-black border ${cor}">${sla}d</span></td>
@@ -234,7 +242,7 @@
             historico.forEach((h, idx) => {
                 const sla = h.sla_no_fim;
                 histBody.innerHTML += `<tr class="border-b bg-white">
-                    <td class="p-2 font-black uppercase text-[8px] text-green-600">${h.status_final}</td>
+                    <td class="p-2 text-green-600 font-black uppercase text-[8px] italic">${h.status_final}</td>
                     <td class="p-2"><span class="px-1 py-0.5 rounded font-bold border bg-gray-100 text-gray-600">${sla}d</span></td>
                     <td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td>
                     <td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2 col-texto-breve text-[9px]">${h.texto}</td>
@@ -243,9 +251,11 @@
                     <td class="p-2 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-bold underline">Reativar</button></td></tr>`;
             });
 
-            document.getElementById('count-verde').innerText = counts.v;
-            document.getElementById('count-amarelo').innerText = counts.a;
-            document.getElementById('count-vermelho').innerText = counts.r;
+            document.getElementById('count-15').innerText = counts.c15;
+            document.getElementById('count-30').innerText = counts.c30;
+            document.getElementById('count-60').innerText = counts.c60;
+            document.getElementById('count-90').innerText = counts.c90;
+            document.getElementById('count-91').innerText = counts.c91;
             lucide.createIcons();
         }
 
