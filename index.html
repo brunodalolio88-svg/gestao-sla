@@ -14,7 +14,7 @@
 
     <style>
         /* Layout Original V1.0 (Clean) */
-        .col-texto-breve { white-space: normal !important; word-wrap: break-word; min-width: 200px; max-width: 350px; line-height: 1.4; }
+        .col-texto-breve { white-space: normal !important; word-wrap: break-word; min-width: 200px; max-width: 300px; line-height: 1.4; }
         th { cursor: pointer; transition: background-color 0.2s; position: relative; }
         th:hover { background-color: #f1f5f9; }
         
@@ -249,7 +249,7 @@
                 else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else counts.c15++;
 
-                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${sla}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${demandas.indexOf(d)})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
+                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${sla}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${idx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
             });
 
             historico.forEach((h, idx) => {
