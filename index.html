@@ -8,20 +8,18 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Esconde o painel até logar */
         #painel-principal { display: none; }
         .col-texto-breve { white-space: normal !important; word-wrap: break-word; min-width: 200px; max-width: 300px; line-height: 1.4; }
         th { cursor: pointer; transition: background-color 0.2s; position: relative; }
         th:hover { background-color: #f1f5f9; }
         .sort-icon { display: inline-block; width: 12px; height: 12px; margin-left: 4px; color: #94a3b8; }
-        
-        /* Estilo da Tela de Login */
         #tela-login {
             background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
-                        url('https://www.meupositivo.com.br/panoramapositivo/wp-content/uploads/2022/12/post_thumbnail-66c77881b6087705e08f64f1899c064e.jpeg');
-            background-size: cover;
-            background-position: center;
+                        url('https://sla.kynto.com.br/isacettep.jpg');
+            background-size: cover; background-position: center;
         }
     </style>
 </head>
@@ -34,22 +32,13 @@
                     <i data-lucide="shield-check" class="text-white w-8 h-8"></i>
                 </div>
                 <h2 class="text-2xl font-black text-white tracking-tighter uppercase italic">Gestão SLA</h2>
-                <p class="text-blue-200 text-xs">Acesse o painel estratégico de demandas</p>
             </div>
             <div class="space-y-4">
-                <div class="relative">
-                    <i data-lucide="user" class="absolute left-3 top-3 text-gray-400 w-4 h-4"></i>
-                    <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                </div>
-                <div class="relative">
-                    <i data-lucide="lock" class="absolute left-3 top-3 text-gray-400 w-4 h-4"></i>
-                    <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                </div>
-                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-600/30 transition-all transform hover:scale-[1.02] active:scale-95 uppercase tracking-widest text-xs">
-                    Entrar no Sistema
-                </button>
+                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg uppercase text-xs tracking-widest transition-all">Entrar</button>
             </div>
-            <p id="login-erro" class="text-red-400 mt-4 text-[10px] hidden font-bold uppercase tracking-tighter">Credenciais inválidas no Banco de Dados</p>
+            <p id="login-erro" class="text-red-400 mt-4 text-[10px] hidden font-bold uppercase">Credenciais Inválidas</p>
         </div>
     </div>
 
@@ -65,39 +54,24 @@
                     <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
                 </div>
                 <div class="flex gap-2 text-xs">
-                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm shadow-blue-600/20"><i data-lucide="pie-chart" class="w-4 h-4"></i> Gráficos</button>
-                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="archive" class="w-4 h-4"></i> Histórico</button>
-                    <button onclick="logout()" class="bg-red-900 hover:bg-red-800 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> Sair</button>
-                    <button onclick="openAddModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i> Novo Manual</button>
+                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm"><i data-lucide="pie-chart" class="w-4 h-4"></i> Gráficos</button>
+                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm"><i data-lucide="archive" class="w-4 h-4"></i> Histórico</button>
+                    <button onclick="logout()" class="bg-red-900 hover:bg-red-800 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> Sair</button>
+                    <button onclick="openAddModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i> Novo Manual</button>
                 </div>
             </div>
         </nav>
 
         <main class="container mx-auto p-4">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
-                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-blue-500 flex justify-between items-center">
-                    <span class="font-bold text-gray-400 uppercase italic">0-15 d</span>
-                    <span id="count-15" class="text-xl font-black text-blue-600">0</span>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center">
-                    <span class="font-bold text-gray-400 uppercase italic">16-30 d</span>
-                    <span id="count-30" class="text-xl font-black text-yellow-600">0</span>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-orange-400 flex justify-between items-center">
-                    <span class="font-bold text-gray-400 uppercase italic">31-60 d</span>
-                    <span id="count-60" class="text-xl font-black text-orange-500">0</span>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center">
-                    <span class="font-bold text-gray-400 uppercase italic">61-90 d</span>
-                    <span id="count-90" class="text-xl font-black text-red-600">0</span>
-                </div>
-                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center">
-                    <span class="font-bold text-gray-400 uppercase italic">91+ d</span>
-                    <span id="count-91" class="text-xl font-black text-purple-700">0</span>
-                </div>
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><span>0-15 d</span><span id="count-15" class="text-xl font-black text-blue-600">0</span></div>
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><span>16-30 d</span><span id="count-30" class="text-xl font-black text-yellow-600">0</span></div>
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-orange-400 flex justify-between items-center"><span>31-60 d</span><span id="count-60" class="text-xl font-black text-orange-500">0</span></div>
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center"><span>61-90 d</span><span id="count-90" class="text-xl font-black text-red-600">0</span></div>
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><span>91+ d</span><span id="count-91" class="text-xl font-black text-purple-700">0</span></div>
             </div>
 
-            <div class="bg-white p-4 rounded border-2 border-dashed border-gray-300 mb-6 text-center hover:border-blue-500 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
+            <div class="bg-white p-4 rounded border-2 border-dashed border-gray-300 mb-6 text-center cursor-pointer group" onclick="document.getElementById('fileInput').click()">
                 <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
                 <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
                 <p class="font-bold text-gray-600 text-sm italic uppercase tracking-tighter">Importar Planilha Estratégica</p>
@@ -105,10 +79,8 @@
 
             <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]">
-                            <tr id="header-principal"></tr>
-                        </thead>
+                    <table class="w-full text-left border-collapse" id="main-table">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]"><tr id="header-principal"></tr></thead>
                         <tbody id="tabela-corpo" class="divide-y divide-gray-100 bg-white font-medium italic"></tbody>
                     </table>
                 </div>
@@ -118,10 +90,26 @@
 
     <div id="chartModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-2xl max-w-6xl w-full p-6 h-[85vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6 border-b pb-2"><h2 class="text-lg font-bold text-slate-800 uppercase italic">Indicadores de Desempenho</h2><button onclick="closeCharts()" class="text-2xl">&times;</button></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-gray-50 p-4 rounded border"><h3 class="text-center font-bold mb-4 uppercase text-gray-500">Distribuição por SLA</h3><canvas id="chartSla"></canvas></div>
-                <div class="bg-gray-50 p-4 rounded border"><h3 class="text-center font-bold mb-4 uppercase text-gray-500">RCs por Subtipos</h3><canvas id="chartSubtipo"></canvas></div>
+            <div class="flex justify-between items-center mb-6 border-b pb-2">
+                <h2 class="font-bold uppercase italic">Indicadores Gerenciais</h2>
+                <div class="flex gap-2">
+                    <button onclick="gerarPDF()" class="bg-blue-600 text-white px-4 py-1 rounded text-[10px] font-bold uppercase hover:bg-blue-700 transition-all flex items-center gap-2">
+                        <i data-lucide="download" class="w-3 h-3"></i> Exportar PDF
+                    </button>
+                    <button onclick="closeCharts()" class="text-2xl">&times;</button>
+                </div>
+            </div>
+            <div id="pdf-content" class="p-4 bg-white">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-50 p-4 rounded border shadow-sm">
+                        <h3 class="text-center font-bold mb-4 uppercase text-gray-500 text-[10px]">Distribuição por SLA</h3>
+                        <canvas id="chartSla"></canvas>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded border shadow-sm">
+                        <h3 class="text-center font-bold mb-4 uppercase text-gray-500 text-[10px]">RCs por Subtipos</h3>
+                        <canvas id="chartSubtipo"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -134,87 +122,52 @@
                 <div><label class="font-bold text-gray-400 uppercase italic">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded"></div>
                 <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Nome do Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Nome Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 uppercase italic">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded"></div>
                 <div class="md:col-span-4"><label class="font-bold text-gray-400 uppercase italic">Texto Breve</label><textarea id="f-texto" rows="2" class="w-full border p-2 rounded outline-none"></textarea></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">Valor Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">Valor Total RC</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-4"><label class="font-bold text-blue-600 uppercase italic underline">Observações Estratégicas</label><textarea id="f-obs" rows="3" class="w-full border border-blue-200 bg-blue-50 p-2 rounded outline-none shadow-inner"></textarea></div>
+                <div><label class="font-bold text-gray-400 uppercase italic">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 uppercase italic">V. Total RC</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
                 <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-400 font-bold uppercase text-[10px]">Cancelar</button>
-                    <button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase shadow-lg">Confirmar Alteração</button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-400 font-bold uppercase">Cancelar</button>
+                    <button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold shadow-lg">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="archiveModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 z-50">
-        <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-blue-900 uppercase italic tracking-widest">Histórico Estratégico de Finalizados</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
-            <div class="overflow-x-auto border rounded flex-grow bg-gray-50"><table class="w-full text-left border-collapse"><thead class="bg-slate-200 text-slate-600 border-b uppercase font-bold sticky top-0"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y divide-gray-200 text-gray-600 italic"></tbody></table></div>
+        <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4"><h2 class="font-bold uppercase italic">Histórico</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
+            <div class="overflow-x-auto flex-grow"><table class="w-full text-left border-collapse"><thead class="bg-slate-200 uppercase font-bold sticky top-0"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y divide-gray-200 italic text-[9px]"></tbody></table></div>
         </div>
     </div>
 
     <script>
         const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
         let authKey = localStorage.getItem("sla_auth");
-        let demandas = [];
-        let historico = [];
-        let myCharts = {};
-        
-        lucide.createIcons();
+        let demandas = []; let historico = []; let myCharts = {};
 
-        // LÓGICA DE LOGIN COM PERSISTÊNCIA
-        window.onload = () => {
-            if (authKey) {
-                document.getElementById('tela-login').classList.add('hidden');
-                loadFromD1();
-            }
-        };
+        window.onload = () => { if (authKey) { document.getElementById('tela-login').classList.add('hidden'); loadFromD1(); } lucide.createIcons(); };
 
         async function tentarLogin() {
             const u = document.getElementById('login-user').value;
             const p = document.getElementById('login-pass').value;
             const key = `${u}:${p}`;
-            
-            try {
-                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
-                if (res.status === 200) {
-                    authKey = key;
-                    localStorage.setItem("sla_auth", key);
-                    document.getElementById('tela-login').classList.add('hidden');
-                    loadFromD1();
-                } else {
-                    document.getElementById('login-erro').classList.remove('hidden');
-                }
-            } catch (e) {
-                alert("Erro ao conectar com o banco de dados.");
-            }
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
+            if (res.status === 200) { authKey = key; localStorage.setItem("sla_auth", key); document.getElementById('tela-login').classList.add('hidden'); loadFromD1(); }
+            else { document.getElementById('login-erro').classList.remove('hidden'); }
         }
 
-        function logout() {
-            localStorage.removeItem("sla_auth");
-            window.location.reload();
-        }
-
-        // --- TODAS AS REGRAS ANTERIORES PRESERVADAS ---
-        const colunas = [
-            { key: 'sla', label: 'SLA' }, { key: 'reqc', label: 'ReqC' }, { key: 'item', label: 'Item' },
-            { key: 'nome', label: 'Nome Requisitante' }, { key: 'ws', label: 'WS' }, { key: 'subtipo', label: 'Subtipo' },
-            { key: 'texto', label: 'Texto Breve' }, { key: 'vunit', label: 'V. Unitário', align: 'text-right' },
-            { key: 'vtotal', label: 'V. Total RC', align: 'text-right' }, { key: 'observacao', label: 'Observações' }
-        ];
+        function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
 
         async function loadFromD1() {
-            try {
-                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
-                const data = await res.json();
-                document.getElementById('painel-principal').style.display = "block";
-                demandas = data.filter(d => !d.status_final);
-                historico = data.filter(d => d.status_final);
-                render();
-            } catch (e) { console.error(e); }
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+            const data = await res.json();
+            document.getElementById('painel-principal').style.display = "block";
+            demandas = data.filter(d => !d.status_final);
+            historico = data.filter(d => d.status_final);
+            render();
         }
 
         async function saveToD1(item) {
@@ -233,124 +186,88 @@
                 const hoje = new Date().setHours(0,0,0,0);
                 await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
                 for (const n of rows) {
-                    const rId = String(n.ReqC || n.reqc || '');
-                    const iId = String(n.Item || n.item || '1');
-                    if (!rId) continue;
+                    const rId = String(n.ReqC || n.reqc || ''); if (!rId) continue;
                     await saveToD1({
-                        sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: rId, item: iId,
+                        sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: rId, item: String(n.Item || '1'),
                         nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '',
                         texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, vtotal: n['Valor Total RC'] || 0,
                         observacao: n.Observações || ''
                     });
                 }
-                alert("Painel sincronizado com sucesso!");
-                loadFromD1();
+                alert("Sincronizado!"); loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
         });
 
-        function openCharts() {
-            document.getElementById('chartModal').classList.remove('hidden');
-            const counts = { c15: 0, c30: 0, c60: 0, c90: 0, c91: 0 };
-            const subtiposMap = {};
-            demandas.forEach(d => {
-                const sla = calcularSlaAtual(d);
-                if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
-                const sub = d.subtipo || "N/A"; subtiposMap[sub] = (subtiposMap[sub] || 0) + 1;
-            });
-            if(myCharts.sla) myCharts.sla.destroy();
-            myCharts.sla = new Chart(document.getElementById('chartSla'), {
-                type: 'bar',
-                data: {
-                    labels: ['0-15 (Azul)', '16-30', '31-60', '61-90', '91+'],
-                    datasets: [{ label: 'RCs', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }]
-                }
-            });
-            if(myCharts.sub) myCharts.sub.destroy();
-            myCharts.sub = new Chart(document.getElementById('chartSubtipo'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(subtiposMap), datasets: [{ data: Object.values(subtiposMap), backgroundColor: ['#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] }
-            });
-        }
-
-        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
-        function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v / 100).toFixed(2) + ""; v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
-        function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
-        function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
-        function calcularSlaAtual(item) { if (item.sla_no_fim !== undefined) return item.sla_no_fim; return parseInt(item.sla_inicial) + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
+        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Nome'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit',align:'text-right'},{key:'vtotal',label:'V. Total',align:'text-right'},{key:'observacao',label:'Obs'}];
 
         function render() {
-            const html = colunas.map(c => `<th class="p-3 ${c.align || ''}">${c.label}</th>`).join('') + '<th class="p-3 text-center">Ações</th>';
-            document.getElementById('header-principal').innerHTML = html;
-            document.getElementById('header-historico').innerHTML = `<th class="p-2">Status</th>` + html;
-            
+            const busca = document.getElementById('inputBusca').value.toLowerCase();
             const corpo = document.getElementById('tabela-corpo');
             const histBody = document.getElementById('tabela-historico');
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-3 ${c.align || ''}">${c.label}</th>`).join('') + '<th class="p-3 text-center">Ações</th>';
+            document.getElementById('header-historico').innerHTML = `<th class="p-2">Status</th>` + colunas.map(c => `<th class="p-2">${c.label}</th>`).join('') + '<th class="p-2">Ação</th>';
+            
             corpo.innerHTML = ""; histBody.innerHTML = "";
-            let counts = { c15: 0, c30: 0, c60: 0, c90: 0, c91: 0 };
+            let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
             demandas.forEach((d, idx) => {
+                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
                 const sla = calcularSlaAtual(d);
-                let cor = "";
-                if (sla > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
-                else if (sla > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
-                else if (sla > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
-                else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
-                else { cor = "bg-blue-100 text-blue-700"; counts.c15++; }
+                let cor = sla > 90 ? "bg-purple-100 text-purple-700" : (sla > 60 ? "bg-red-100 text-red-700" : (sla > 30 ? "bg-orange-100 text-orange-700" : (sla > 15 ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700")));
+                if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
 
                 corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b">
                     <td class="p-3"><span class="px-2 py-1 rounded font-black border ${cor}">${sla}d</span></td>
                     <td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td>
-                    <td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold italic uppercase tracking-tighter">${d.subtipo}</td>
+                    <td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold italic uppercase tracking-tighter text-[9px]">${d.subtipo}</td>
                     <td class="p-3 col-texto-breve">${d.texto}</td><td class="p-3 text-right">${fmtMoeda(d.vunit)}</td>
                     <td class="p-3 text-right font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-800">${d.observacao}</td>
-                    <td class="p-3 flex gap-1 justify-center">
-                        <button onclick="setStatus(${idx}, 'Concluído')" class="p-1.5 text-green-600 hover:bg-green-100 rounded"><i data-lucide="check" class="w-3 h-3"></i></button>
-                        <button onclick="setStatus(${idx}, 'Cancelado')" class="p-1.5 text-red-600 hover:bg-red-100 rounded"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                        <button onclick="openEdit(${idx})" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded"><i data-lucide="edit" class="w-3 h-3"></i></button>
-                    </td></tr>`;
+                    <td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-green-600">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600">✘</button><button onclick="openEdit(${idx})" class="text-blue-600">✎</button></td></tr>`;
             });
 
             historico.forEach((h, idx) => {
-                const sla = h.sla_no_fim;
-                histBody.innerHTML += `<tr class="border-b bg-white text-[9px]"><td class="p-2 font-bold uppercase text-green-600 italic">${h.status_final}</td><td class="p-2">${sla}d</td><td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td><td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2 col-texto-breve">${h.texto}</td><td class="p-2">${fmtMoeda(h.vunit)}</td><td class="p-2 font-bold">${fmtMoeda(h.vtotal)}</td><td class="p-2">${h.observacao}</td><td class="p-2 text-center"><button onclick="reativar(${idx})" class="text-blue-600 underline">Reativar</button></td></tr>`;
+                histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-2 font-bold text-green-600 italic uppercase">${h.status_final}</td><td class="p-2">${h.sla_no_fim}d</td><td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td><td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2 col-texto-breve">${h.texto}</td><td class="p-2">${fmtMoeda(h.vunit)}</td><td class="p-2 font-bold">${fmtMoeda(h.vtotal)}</td><td class="p-2">${h.observacao}</td><td class="p-2"><button onclick="reativar(${idx})" class="text-blue-600 underline">Reativar</button></td></tr>`;
             });
 
-            document.getElementById('count-15').innerText = counts.c15;
-            document.getElementById('count-30').innerText = counts.c30;
-            document.getElementById('count-60').innerText = counts.c60;
-            document.getElementById('count-90').innerText = counts.c90;
-            document.getElementById('count-91').innerText = counts.c91;
+            document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
             lucide.createIcons();
         }
 
+        function openCharts() {
+            document.getElementById('chartModal').classList.remove('hidden');
+            const counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; const subMap = {};
+            demandas.forEach(d => { const sla = calcularSlaAtual(d); if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++; subMap[d.subtipo] = (subMap[d.subtipo] || 0) + 1; });
+            if(myCharts.sla) myCharts.sla.destroy(); myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15', '16-30', '31-60', '61-90', '91+'], datasets: [{ label: 'RCs', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }] } });
+            if(myCharts.sub) myCharts.sub.destroy(); myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] } });
+        }
+
+        async function gerarPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const element = document.getElementById('pdf-content');
+            
+            await html2canvas(element).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                pdf.text("Relatório de Indicadores SLA Mestre", 10, 10);
+                pdf.addImage(imgData, 'PNG', 10, 20, 190, 100);
+                pdf.save("Relatorio_SLA.pdf");
+            });
+        }
+
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+        function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
+        function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+        function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
+        function calcularSlaAtual(item) { if (item.sla_no_fim !== undefined) return item.sla_no_fim; return parseInt(item.sla_inicial) + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
         async function setStatus(idx, s) { let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
-
-        document.getElementById('demandaForm').onsubmit = async (e) => {
-            e.preventDefault(); const idx = document.getElementById('editIndex').value;
-            const data = {
-                sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0),
-                reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value,
-                subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), observacao: document.getElementById('f-obs').value
-            };
-            await saveToD1(data); closeModal(); loadFromD1();
-        };
-
+        document.getElementById('demandaForm').onsubmit = async (e) => { e.preventDefault(); const idx = document.getElementById('editIndex').value; const data = { sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), observacao: document.getElementById('f-obs').value }; await saveToD1(data); closeModal(); loadFromD1(); };
         function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('formModal').classList.remove('hidden'); }
-        function openEdit(idx) {
-            const d = demandas[idx]; document.getElementById('editIndex').value = idx;
-            document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc;
-            document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item;
-            document.getElementById('f-nome').value = d.nome; document.getElementById('f-ws').value = d.ws;
-            document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-texto').value = d.texto;
-            document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal);
-            document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden');
-        }
+        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome; document.getElementById('f-ws').value = d.ws; document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-texto').value = d.texto; document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
         function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
         function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
-
