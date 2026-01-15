@@ -38,11 +38,11 @@
                 <p class="text-blue-200 text-[10px] uppercase tracking-widest mt-2">Enterprise Analytics Portal</p>
             </div>
             <div class="space-y-4">
-                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/10 border border-white/20 rounded-xl py-4 px-5 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400">
-                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/10 border border-white/20 rounded-xl py-4 px-5 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400">
-                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-xl uppercase text-xs tracking-[0.2em] transition-all transform active:scale-95">Acessar Painel</button>
+                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/10 border border-white/20 rounded-xl py-4 px-5 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/10 border border-white/20 rounded-xl py-4 px-5 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-xl uppercase text-xs tracking-widest transition-all transform active:scale-95">Acessar Painel</button>
             </div>
-            <p id="login-erro" class="text-red-400 mt-6 text-[10px] hidden font-bold uppercase tracking-widest animate-pulse">Acesso Negado - Verifique o Banco D1</p>
+            <p id="login-erro" class="text-red-400 mt-6 text-[10px] hidden font-bold uppercase tracking-widest animate-pulse">Acesso Negado</p>
         </div>
     </div>
 
@@ -51,60 +51,40 @@
             <div class="container mx-auto flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center gap-3">
                     <div class="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-600/30"><i data-lucide="zap" class="w-5 h-5"></i></div>
-                    <h1 class="font-black text-lg uppercase tracking-tighter italic">SLA Mestre <span class="text-blue-500 text-xs not-italic font-medium ml-2">v4.0</span></h1>
+                    <h1 class="font-black text-lg uppercase tracking-tighter italic">SLA Mestre</h1>
                 </div>
                 <div class="relative flex-grow max-w-md">
-                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Filtrar demandas instantaneamente..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all shadow-inner">
+                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Filtrar demandas..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm shadow-inner">
                     <i data-lucide="search" class="absolute left-3 top-3 text-slate-500 w-4 h-4"></i>
                 </div>
                 <div class="flex gap-2 text-xs">
-                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboards</button>
-                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg"><i data-lucide="history" class="w-4 h-4"></i> Histórico</button>
-                    <button onclick="logout()" class="bg-slate-800 hover:bg-red-900 border border-slate-700 px-3 py-2.5 rounded-xl transition-all"><i data-lucide="log-out" class="w-4 h-4"></i></button>
-                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all"><i data-lucide="plus-circle" class="w-4 h-4"></i> Novo</button>
+                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboards</button>
+                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all"><i data-lucide="history" class="w-4 h-4"></i> Histórico</button>
+                    <button onclick="logout()" class="bg-slate-800 hover:bg-red-900 px-3 py-2.5 rounded-xl transition-all"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all"><i data-lucide="plus-circle" class="w-4 h-4"></i> Novo</button>
                 </div>
             </div>
         </nav>
 
         <main class="container mx-auto p-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-blue-500 flex flex-col gap-1 transition-all hover:shadow-xl">
-                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Imediato (0-15)</span>
-                    <span id="count-15" class="text-3xl font-black text-blue-600">0</span>
-                </div>
-                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-yellow-400 flex flex-col gap-1 transition-all hover:shadow-xl">
-                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Atenção (16-30)</span>
-                    <span id="count-30" class="text-3xl font-black text-yellow-600">0</span>
-                </div>
-                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-orange-500 flex flex-col gap-1 transition-all hover:shadow-xl">
-                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Alerta (31-60)</span>
-                    <span id="count-60" class="text-3xl font-black text-orange-500">0</span>
-                </div>
-                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-red-500 flex flex-col gap-1 transition-all hover:shadow-xl">
-                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Crítico (61-90)</span>
-                    <span id="count-90" class="text-3xl font-black text-red-600">0</span>
-                </div>
-                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-purple-600 flex flex-col gap-1 transition-all hover:shadow-xl">
-                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Grave (91+)</span>
-                    <span id="count-91" class="text-3xl font-black text-purple-700">0</span>
-                </div>
+                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-blue-500 flex flex-col gap-1 transition-all hover:shadow-xl"><span class="text-[9px] font-black text-slate-400 uppercase italic">Imediato (0-15)</span><span id="count-15" class="text-3xl font-black text-blue-600">0</span></div>
+                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-yellow-400 flex flex-col gap-1 transition-all hover:shadow-xl"><span class="text-[9px] font-black text-slate-400 uppercase italic">Atenção (16-30)</span><span id="count-30" class="text-3xl font-black text-yellow-600">0</span></div>
+                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-orange-500 flex flex-col gap-1 transition-all hover:shadow-xl"><span class="text-[9px] font-black text-slate-400 uppercase italic">Alerta (31-60)</span><span id="count-60" class="text-3xl font-black text-orange-500">0</span></div>
+                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-red-500 flex flex-col gap-1 transition-all hover:shadow-xl"><span class="text-[9px] font-black text-slate-400 uppercase italic">Crítico (61-90)</span><span id="count-90" class="text-3xl font-black text-red-600">0</span></div>
+                <div class="glass p-4 rounded-2xl shadow-sm border-b-4 border-purple-600 flex flex-col gap-1 transition-all hover:shadow-xl"><span class="text-[9px] font-black text-slate-400 uppercase italic">Grave (91+)</span><span id="count-91" class="text-3xl font-black text-purple-700">0</span></div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl border-2 border-dashed border-slate-200 mb-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all group" onclick="document.getElementById('fileInput').click()">
                 <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
-                <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <i data-lucide="upload-cloud" class="text-blue-600"></i>
-                </div>
-                <p class="font-black text-slate-700 text-sm uppercase italic tracking-tighter">Sincronização Master de Planilha</p>
-                <p class="text-[9px] text-slate-400 mt-1 uppercase">Sincroniza múltiplos itens e limpa ausentes automaticamente</p>
+                <i data-lucide="upload-cloud" class="mx-auto text-blue-600 mb-3 group-hover:scale-110 transition-transform"></i>
+                <p class="font-black text-slate-700 text-sm uppercase italic">Sincronização Master de Planilha</p>
             </div>
 
             <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-900 text-slate-400 uppercase font-black border-b border-slate-800 text-[9px] tracking-widest italic">
-                            <tr id="header-principal"></tr>
-                        </thead>
+                        <thead class="bg-slate-900 text-slate-400 uppercase font-black border-b text-[9px] italic"><tr id="header-principal"></tr></thead>
                         <tbody id="tabela-corpo" class="divide-y divide-slate-100 bg-white font-medium italic"></tbody>
                     </table>
                 </div>
@@ -114,50 +94,46 @@
 
     <div id="chartModal" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full p-8 h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
-                <div>
-                    <h2 class="text-2xl font-black text-slate-800 uppercase italic">Enterprise Intelligence</h2>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-[0.3em]">Análise volumétrica de demandas e performance</p>
-                </div>
+            <div class="flex justify-between items-center mb-8 border-b pb-4">
+                <h2 class="text-2xl font-black uppercase italic">Dashboard Analítico</h2>
                 <div class="flex gap-3">
-                    <button onclick="gerarPDF()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-xl">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Gerar Relatório PDF
-                    </button>
-                    <button onclick="closeCharts()" class="bg-slate-100 text-slate-400 hover:text-red-500 p-2 rounded-full transition-all"><i data-lucide="x" class="w-6 h-6"></i></button>
+                    <button onclick="gerarPDF()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-black transition-all flex items-center gap-2"><i data-lucide="file-text"></i> PDF</button>
+                    <button onclick="closeCharts()" class="text-2xl">&times;</button>
                 </div>
             </div>
-            <div id="pdf-container" class="flex-grow overflow-y-auto pr-2">
+            <div id="pdf-container" class="overflow-y-auto pr-2">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-4">
-                    <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
-                        <h3 class="text-center font-black mb-6 uppercase text-slate-400 text-[10px] tracking-widest">Aging de Demandas (SLA)</h3>
-                        <canvas id="chartSla" style="max-height: 300px;"></canvas>
-                    </div>
-                    <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
-                        <h3 class="text-center font-black mb-6 uppercase text-slate-400 text-[10px] tracking-widest">Distribuição por Subtipo</h3>
-                        <canvas id="chartSubtipo" style="max-height: 300px;"></canvas>
-                    </div>
+                    <div class="bg-slate-50 p-6 rounded-3xl border"><canvas id="chartSla"></canvas></div>
+                    <div class="bg-slate-50 p-6 rounded-3xl border"><canvas id="chartSubtipo"></canvas></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="archiveModal" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-[95%] p-8 h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6 border-b pb-4"><h2 class="text-xl font-black uppercase italic">Histórico de Finalizados</h2><button onclick="closeArchive()" class="text-2xl">&times;</button></div>
+            <div class="overflow-x-auto flex-grow rounded-xl border border-slate-100 bg-slate-50/30">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-200 text-slate-600 uppercase font-black border-b text-[9px] sticky top-0 italic"><tr id="header-historico"></tr></thead>
+                    <tbody id="tabela-historico" class="divide-y divide-slate-100 italic text-[10px]"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="formModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-8 max-h-[95vh] overflow-y-auto border border-slate-100">
-            <h2 id="modalTitle" class="text-2xl font-black mb-8 text-slate-800 border-b pb-4 italic uppercase tracking-tighter">Manutenção de Demanda</h2>
+        <div class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-8 max-h-[95vh] overflow-y-auto">
+            <h2 id="modalTitle" class="text-2xl font-black mb-8 border-b pb-4 italic uppercase">Manutenção</h2>
             <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <input type="hidden" id="editIndex">
-                <div class="space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">SLA Inicial</label><input type="number" id="f-sla" required class="w-full bg-slate-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold"></div>
-                <div class="space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">ReqC</label><input type="text" id="f-reqc" required class="w-full bg-slate-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold"></div>
-                <div class="md:col-span-2 space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">Item</label><input type="text" id="f-item" required class="w-full bg-slate-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold"></div>
-                <div class="md:col-span-2 space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">Requisitante</label><input type="text" id="f-nome" class="w-full bg-slate-50 border-none p-3 rounded-xl"></div>
-                <div class="space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">WS</label><input type="text" id="f-ws" class="w-full bg-slate-50 border-none p-3 rounded-xl"></div>
-                <div class="space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">Subtipo</label><input type="text" id="f-sub" class="w-full bg-slate-50 border-none p-3 rounded-xl text-blue-600 font-bold"></div>
-                <div class="md:col-span-4 space-y-1"><label class="font-black text-slate-400 uppercase italic text-[9px]">Texto Breve</label><textarea id="f-texto" rows="3" class="w-full bg-slate-50 border-none p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></textarea></div>
-                <div class="md:col-span-4 space-y-1"><label class="font-black text-blue-600 uppercase italic text-[9px] underline">Observações Estratégicas</label><textarea id="f-obs" rows="4" class="w-full bg-blue-50/50 border border-blue-100 p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 shadow-inner italic"></textarea></div>
-                <div class="md:col-span-4 flex justify-end gap-4 border-t pt-6">
-                    <button type="button" onclick="closeModal()" class="px-6 py-3 text-slate-400 font-bold uppercase hover:text-slate-600 transition-all">Descartar</button>
-                    <button type="submit" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-black uppercase shadow-xl hover:bg-black transition-all transform active:scale-95">Salvar Alterações</button>
-                </div>
+                <div><label class="font-black text-slate-400 uppercase text-[9px]">SLA Inicial</label><input type="number" id="f-sla" required class="w-full bg-slate-50 p-3 rounded-xl font-bold outline-none border border-slate-200"></div>
+                <div><label class="font-black text-slate-400 uppercase text-[9px]">ReqC</label><input type="text" id="f-reqc" required class="w-full bg-slate-50 p-3 rounded-xl font-bold outline-none border border-slate-200"></div>
+                <div class="md:col-span-2"><label class="font-black text-slate-400 uppercase text-[9px]">Item</label><input type="text" id="f-item" required class="w-full bg-slate-50 p-3 rounded-xl font-bold outline-none border border-slate-200"></div>
+                <div class="md:col-span-2"><label class="font-black text-slate-400 uppercase text-[9px]">Requisitante</label><input type="text" id="f-nome" class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200"></div>
+                <div><label class="font-black text-slate-400 uppercase text-[9px]">Subtipo</label><input type="text" id="f-sub" class="w-full bg-slate-50 p-3 rounded-xl text-blue-600 font-bold border border-slate-200"></div>
+                <div class="md:col-span-4"><label class="font-black text-slate-400 uppercase text-[9px]">Observações</label><textarea id="f-obs" rows="4" class="w-full bg-blue-50/50 p-4 rounded-xl outline-none border border-blue-100 italic"></textarea></div>
+                <div class="md:col-span-4 flex justify-end gap-4 pt-6 border-t"><button type="button" onclick="closeModal()" class="px-6 py-3 text-slate-400 font-bold uppercase">Cancelar</button><button type="submit" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-black uppercase">Salvar</button></div>
             </form>
         </div>
     </div>
@@ -170,8 +146,7 @@
         window.onload = () => { if (authKey) { document.getElementById('tela-login').classList.add('hidden'); loadFromD1(); } lucide.createIcons(); };
 
         async function tentarLogin() {
-            const u = document.getElementById('login-user').value;
-            const p = document.getElementById('login-pass').value;
+            const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             const key = `${u}:${p}`;
             const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
             if (res.status === 200) { authKey = key; localStorage.setItem("sla_auth", key); document.getElementById('tela-login').classList.add('hidden'); loadFromD1(); }
@@ -181,20 +156,18 @@
         function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
 
         async function loadFromD1() {
-            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
-            const data = await res.json();
-            document.getElementById('painel-principal').style.display = "block";
-            demandas = data.filter(d => !d.status_final);
-            historico = data.filter(d => d.status_final);
-            render();
+            try {
+                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+                const data = await res.json();
+                document.getElementById('painel-principal').style.display = "block";
+                demandas = data.filter(d => !d.status_final);
+                historico = data.filter(d => d.status_final);
+                render();
+            } catch (e) { console.error(e); }
         }
 
         async function saveToD1(item) {
-            await fetch(`${API_URL}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': authKey },
-                body: JSON.stringify(item)
-            });
+            await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
         document.getElementById('fileInput').addEventListener('change', (e) => {
@@ -206,14 +179,9 @@
                 await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
                 for (const n of rows) {
                     const rId = String(n.ReqC || n.reqc || ''); if (!rId) continue;
-                    await saveToD1({
-                        sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: rId, item: String(n.Item || '1'),
-                        nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '',
-                        texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, vtotal: n['Valor Total RC'] || 0,
-                        observacao: n.Observações || ''
-                    });
+                    await saveToD1({ sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: rId, item: String(n.Item || '1'), nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '', texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, vtotal: n['Valor Total RC'] || 0, observacao: n.Observações || '' });
                 }
-                alert("Sincronização Master Concluída."); loadFromD1();
+                alert("Painel Atualizado."); loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
         });
@@ -223,8 +191,12 @@
         function render() {
             const busca = document.getElementById('inputBusca').value.toLowerCase();
             const corpo = document.getElementById('tabela-corpo');
+            const histBody = document.getElementById('tabela-historico');
+            
             document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-4 ${c.align || ''}">${c.label}</th>`).join('') + '<th class="p-4 text-center">Ações</th>';
-            corpo.innerHTML = "";
+            document.getElementById('header-historico').innerHTML = `<th class="p-2 text-red-500">Status</th>` + colunas.map(c => `<th class="p-2">${c.label}</th>`).join('') + '<th class="p-2">Ação</th>';
+            
+            corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
             demandas.forEach((d, idx) => {
@@ -233,80 +205,42 @@
                 let cor = sla > 90 ? "bg-purple-100 text-purple-700" : (sla > 60 ? "bg-red-100 text-red-700" : (sla > 30 ? "bg-orange-100 text-orange-700" : (sla > 15 ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700")));
                 if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
 
-                corpo.innerHTML += `<tr class="hover:bg-slate-50/80 transition-all border-b border-slate-50">
-                    <td class="p-4"><span class="px-2 py-1 rounded font-black border ${cor}">${sla}d</span></td>
-                    <td class="p-4 font-bold text-slate-900">${d.reqc}</td><td class="p-4">${d.item}</td><td class="p-4">${d.nome}</td>
-                    <td class="p-4">${d.ws}</td><td class="p-4 text-blue-600 font-bold italic tracking-tighter">${d.subtipo}</td>
-                    <td class="p-4 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-4 text-right">${fmtMoeda(d.vunit)}</td>
-                    <td class="p-4 text-right font-bold text-slate-800">${fmtMoeda(d.vtotal)}</td><td class="p-4 text-blue-800 text-[10px] italic">${d.observacao || ''}</td>
-                    <td class="p-4 flex gap-2 justify-center">
-                        <button onclick="setStatus(${idx}, 'Concluído')" title="Concluir" class="btn-action w-7 h-7 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center shadow-sm"><i data-lucide="check" class="w-4 h-4"></i></button>
-                        <button onclick="setStatus(${idx}, 'Cancelado')" title="Cancelar" class="btn-action w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center shadow-sm"><i data-lucide="x" class="w-4 h-4"></i></button>
-                        <button onclick="openEdit(${idx})" title="Editar" class="btn-action w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center shadow-sm"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                    </td></tr>`;
+                corpo.innerHTML += `<tr class="border-b transition-all hover:bg-slate-50/80"><td class="p-4"><span class="px-2 py-1 rounded font-black border ${cor}">${sla}d</span></td><td class="p-4 font-bold">${d.reqc}</td><td class="p-4">${d.item}</td><td class="p-4">${d.nome}</td><td class="p-4">${d.ws}</td><td class="p-4 text-blue-600 font-bold italic">${d.subtipo}</td><td class="p-4 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-4 text-right">${fmtMoeda(d.vunit)}</td><td class="p-4 text-right font-bold text-slate-800">${fmtMoeda(d.vtotal)}</td><td class="p-4 text-blue-800 text-[10px] italic">${d.observacao || ''}</td><td class="p-4 flex gap-2 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="btn-action w-7 h-7 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="setStatus(${idx}, 'Cancelado')" class="btn-action w-7 h-7 bg-red-100 text-red-600 rounded-lg flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button><button onclick="openEdit(${idx})" class="btn-action w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i data-lucide="edit-3" class="w-4 h-4"></i></button></td></tr>`;
+            });
+
+            historico.forEach((h, idx) => {
+                histBody.innerHTML += `<tr class="border-b bg-white text-[9px]"><td class="p-2 font-black text-green-600 uppercase italic">${h.status_final}</td><td class="p-2 font-bold">${h.sla_no_fim}d</td><td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td><td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2 col-texto-breve">${h.texto}</td><td class="p-2 text-right">${fmtMoeda(h.vunit)}</td><td class="p-2 text-right font-bold">${fmtMoeda(h.vtotal)}</td><td class="p-2 text-slate-500">${h.observacao || ''}</td><td class="p-2 text-center"><button onclick="reativar(${idx})" class="text-blue-600 underline font-black">REATIVAR</button></td></tr>`;
             });
 
             document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
             lucide.createIcons();
         }
 
-        function openCharts() {
-            document.getElementById('chartModal').classList.remove('hidden');
-            const counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; const subMap = {};
-            demandas.forEach(d => { const sla = calcularSlaAtual(d); if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++; subMap[d.subtipo] = (subMap[d.subtipo] || 0) + 1; });
-            if(myCharts.sla) myCharts.sla.destroy(); myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15', '16-30', '31-60', '61-90', '91+'], datasets: [{ label: 'RCs', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'], borderRadius: 8 }] }, options: { plugins: { legend: { display: false } } } });
-            if(myCharts.sub) myCharts.sub.destroy(); myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 0 }] }, options: { cutout: '70%' } });
-        }
-
         async function gerarPDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('l', 'mm', 'a4');
-            const canvasSla = document.getElementById('chartSla');
-            const canvasSub = document.getElementById('chartSubtipo');
-
-            pdf.setFontSize(18);
-            pdf.text("RELATORIO ESTRATEGICO - GESTAO SLA MESTRE", 15, 15);
-            pdf.setFontSize(10);
-            pdf.text(`Gerado em: ${new Date().toLocaleString()}`, 15, 22);
-
-            // Adiciona os gráficos
-            const imgSla = canvasSla.toDataURL('image/png', 1.0);
-            const imgSub = canvasSub.toDataURL('image/png', 1.0);
-            pdf.addImage(imgSla, 'PNG', 15, 30, 130, 70);
-            pdf.addImage(imgSub, 'PNG', 155, 30, 100, 70);
-
-            // Adiciona a Tabela de Dados no PDF
-            const headers = [colunas.map(c => c.label)];
-            const data = demandas.map(d => [
-                calcularSlaAtual(d) + "d", d.reqc, d.item, d.nome, d.ws, d.subtipo, 
-                d.texto.substring(0, 40) + "...", fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao || ""
-            ]);
-
-            pdf.autoTable({
-                startY: 110,
-                head: headers,
-                body: data,
-                theme: 'grid',
-                styles: { fontSize: 7, fontStyle: 'italic' },
-                headStyles: { fillStyle: '#0f172a' }
-            });
-
-            pdf.save("Gestao_SLA_Master_Report.pdf");
+            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
+            pdf.setFontSize(16); pdf.text("GESTAO SLA MESTRE - STATUS REPORT", 15, 15);
+            pdf.setFontSize(9); pdf.text(`Relatorio gerado em: ${new Date().toLocaleString()}`, 15, 20);
+            const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0);
+            const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
+            pdf.addImage(imgSla, 'PNG', 15, 30, 120, 60); pdf.addImage(imgSub, 'PNG', 150, 30, 80, 60);
+            pdf.autoTable({ startY: 100, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'grid', styles: { fontSize: 6 } });
+            pdf.save("SLA_Master_Report.pdf");
         }
 
+        function openCharts() { document.getElementById('chartModal').classList.remove('hidden'); const counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; const subMap = {}; demandas.forEach(d => { const sla = calcularSlaAtual(d); if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++; subMap[d.subtipo] = (subMap[d.subtipo] || 0) + 1; }); if(myCharts.sla) myCharts.sla.destroy(); myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15', '16-30', '31-60', '61-90', '91+'], datasets: [{ label: 'RCs', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }] }, options: { plugins: { legend: { display: false } } } }); if(myCharts.sub) myCharts.sub.destroy(); myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth:0 }] }, options: { cutout: '70%' } }); }
         function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
+        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
         function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
         function calcularSlaAtual(item) { if (item.sla_no_fim !== undefined) return item.sla_no_fim; return parseInt(item.sla_inicial) + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
         async function setStatus(idx, s) { let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
-        document.getElementById('demandaForm').onsubmit = async (e) => { e.preventDefault(); const idx = document.getElementById('editIndex').value; const data = { sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), observacao: document.getElementById('f-obs').value }; await saveToD1(data); closeModal(); loadFromD1(); };
+        document.getElementById('demandaForm').onsubmit = async (e) => { e.preventDefault(); const idx = document.getElementById('editIndex').value; const data = { sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, subtipo: document.getElementById('f-sub').value, observacao: document.getElementById('f-obs').value }; await saveToD1(data); closeModal(); loadFromD1(); };
         function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('formModal').classList.remove('hidden'); }
-        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome; document.getElementById('f-ws').value = d.ws; document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-texto').value = d.texto; document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
-        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
-        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome; document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden'); }
     </script>
 </body>
 </html>
