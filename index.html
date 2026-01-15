@@ -13,20 +13,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* Estilo Original Restaurado */
+        /* Estilo Original v1.0 */
         .col-texto-breve { white-space: normal !important; word-wrap: break-word; min-width: 200px; max-width: 300px; line-height: 1.4; }
         th { cursor: pointer; transition: background-color 0.2s; position: relative; }
         th:hover { background-color: #f1f5f9; }
         .sort-icon { display: inline-block; width: 12px; height: 12px; margin-left: 4px; color: #94a3b8; }
         
-        /* Background Login solicitado */
         #tela-login {
-            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
+            background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), 
                         url('https://sla.kynto.com.br/sla.jpeg');
             background-size: cover; background-position: center;
         }
         
         #painel-principal { display: none; }
+        canvas { max-width: 100% !important; height: auto !important; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans text-[11px]">
@@ -40,11 +40,11 @@
                 <h2 class="text-2xl font-black text-white uppercase italic">Gestão SLA</h2>
             </div>
             <div class="space-y-4">
-                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg uppercase text-xs tracking-widest transition-all">Entrar no Sistema</button>
+                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg uppercase text-xs tracking-widest transition-all">Entrar</button>
             </div>
-            <p id="login-erro" class="text-red-400 mt-4 text-[10px] hidden font-bold uppercase animate-pulse">Credenciais Inválidas</p>
+            <p id="login-erro" class="text-red-400 mt-4 text-[10px] hidden font-bold uppercase">Credenciais Inválidas</p>
         </div>
     </div>
 
@@ -57,108 +57,102 @@
                 </div>
                 
                 <div class="relative flex-grow max-w-md">
-                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Busca geral (ReqC, Item, Nome...)" class="w-full pl-10 pr-4 py-2 rounded bg-slate-800 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Busca geral..." class="w-full pl-10 pr-4 py-2 rounded bg-slate-800 border border-slate-700 outline-none text-sm focus:ring-2 focus:ring-blue-500">
                     <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
                 </div>
 
                 <div class="flex gap-2 text-xs">
-                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="pie-chart" class="w-4 h-4"></i> Gráficos</button>
-                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="archive" class="w-4 h-4"></i> Histórico</button>
-                    <button onclick="openUserModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-2 rounded font-bold transition-all"><i data-lucide="users" class="w-4 h-4"></i></button>
-                    <button onclick="logout()" class="bg-red-900/50 hover:bg-red-600 px-3 py-2 rounded transition-all"><i data-lucide="log-out" class="w-4 h-4"></i></button>
-                    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i> Novo Manual</button>
+                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-bold flex items-center gap-2 transition-all shadow-sm"><i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Manual</button>
+                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm"><i data-lucide="pie-chart" class="w-4 h-4"></i> Gráficos</button>
+                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm"><i data-lucide="archive" class="w-4 h-4"></i> Histórico</button>
+                    <button onclick="openUserModal()" class="bg-slate-800 border border-slate-600 px-3 py-2 rounded font-bold"><i data-lucide="users" class="w-4 h-4"></i></button>
+                    <button onclick="logout()" class="bg-red-900/50 hover:bg-red-600 px-3 py-2 rounded"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </nav>
 
         <main class="container mx-auto p-4">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><span class="font-bold text-gray-400 uppercase italic">Imediato (0-15)</span><span id="count-15" class="text-2xl font-black text-blue-600">0</span></div>
-                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><span class="font-bold text-gray-400 uppercase italic">Atenção (16-30)</span><span id="count-30" class="text-2xl font-black text-yellow-600">0</span></div>
-                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-orange-500 flex justify-between items-center"><span class="font-bold text-gray-400 uppercase italic">Alerta (31-60)</span><span id="count-60" class="text-2xl font-black text-orange-500">0</span></div>
-                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center"><span class="font-bold text-gray-400 uppercase italic">Crítico (61-90)</span><span id="count-90" class="text-2xl font-black text-red-600">0</span></div>
-                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><span class="font-bold text-gray-400 uppercase italic">Grave (91+)</span><span id="count-91" class="text-2xl font-black text-purple-700">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">0-15 d</span><span id="count-15" class="text-2xl font-black text-blue-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><span class="font-bold text-gray-400 italic">16-30 d</span><span id="count-30" class="text-2xl font-black text-yellow-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-orange-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">31-60 d</span><span id="count-60" class="text-2xl font-black text-orange-500">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">61-90 d</span><span id="count-90" class="text-2xl font-black text-red-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><span class="font-bold text-gray-400 italic">91+ d</span><span id="count-91" class="text-2xl font-black text-purple-700">0</span></div>
             </div>
 
             <div class="bg-white p-4 rounded border-2 border-dashed border-gray-300 mb-6 text-center hover:border-blue-500 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
                 <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
                 <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
-                <p class="font-bold text-gray-600 text-sm italic">Importar Planilha do Sistema (Sincronização Master)</p>
+                <p class="font-bold text-gray-600 text-sm">Sincronizar Planilha Master</p>
             </div>
 
             <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]">
-                            <tr id="header-principal"></tr>
-                        </thead>
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]"><tr id="header-principal"></tr></thead>
                         <tbody id="tabela-corpo" class="divide-y divide-gray-100 bg-white font-medium italic"></tbody>
                     </table>
                 </div>
-                <div id="empty-state" class="hidden p-20 text-center text-slate-300 uppercase font-black italic tracking-tighter">Nenhum dado ativo no momento</div>
             </div>
         </main>
     </div>
 
-    <div id="chartModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-2xl max-w-6xl w-full p-6 h-[85vh] flex flex-col">
+    <div id="chartModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full p-6 h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-6 border-b pb-2">
-                <h2 class="text-lg font-bold text-slate-800 uppercase italic">Indicadores de Desempenho</h2>
+                <h2 class="text-lg font-bold uppercase italic">Relatórios Visuais</h2>
                 <div class="flex gap-2">
-                    <button onclick="gerarPDF()" class="bg-blue-600 text-white px-4 py-1 rounded text-[10px] font-bold uppercase hover:bg-blue-700 transition-all flex items-center gap-2"><i data-lucide="download" class="w-3 h-3"></i> Exportar PDF</button>
+                    <button onclick="gerarPDF()" class="bg-blue-600 text-white px-4 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2"><i data-lucide="download" class="w-3 h-3"></i> PDF</button>
                     <button onclick="closeCharts()" class="text-2xl">&times;</button>
                 </div>
             </div>
-            <div id="pdf-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2">
-                <div class="bg-gray-50 p-4 rounded border"><h3 class="text-center font-bold mb-4 uppercase text-gray-500 text-[10px]">Distribuição por SLA</h3><canvas id="chartSla"></canvas></div>
-                <div class="bg-gray-50 p-4 rounded border"><h3 class="text-center font-bold mb-4 uppercase text-gray-500 text-[10px]">RCs por Subtipos</h3><canvas id="chartSubtipo"></canvas></div>
+            <div id="area-graficos" class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto p-4">
+                <div class="bg-gray-50 p-4 border rounded shadow-inner h-[300px] flex flex-col items-center">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-4 text-center">Distribuição por SLA</h3>
+                    <div class="w-full h-full"><canvas id="chartSla"></canvas></div>
+                </div>
+                <div class="bg-gray-50 p-4 border rounded shadow-inner h-[300px] flex flex-col items-center">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-4 text-center">RCs por Subtipo</h3>
+                    <div class="w-full h-full"><canvas id="chartSubtipo"></canvas></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="archiveModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 z-50">
-        <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-blue-900 uppercase italic">Histórico Completo de Finalizados</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
+        <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 font-bold text-blue-900 uppercase italic"><h2>Histórico</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
             <div class="overflow-x-auto border rounded flex-grow bg-gray-50">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-200 text-slate-600 border-b uppercase font-bold sticky top-0"><tr id="header-historico"></tr></thead>
-                    <tbody id="tabela-historico" class="divide-y divide-gray-200 text-gray-600 italic"></tbody>
+                    <thead class="bg-slate-200 text-slate-600 uppercase font-bold sticky top-0"><tr id="header-historico"></tr></thead>
+                    <tbody id="tabela-historico" class="divide-y text-[9px]"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
     <div id="formModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full p-6 max-h-[95vh] overflow-y-auto">
-            <h2 id="modalTitle" class="text-lg font-bold mb-6 text-slate-800 border-b pb-2 italic uppercase">Manutenção de Demanda</h2>
+        <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full p-6">
+            <h2 id="modalTitle" class="text-lg font-bold mb-6 border-b pb-2 uppercase italic">Manutenção</h2>
             <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <input type="hidden" id="editIndex">
-                <div><label class="font-bold text-gray-400 uppercase italic">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded"></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-2"><label class="font-bold text-gray-400 uppercase italic">Nome Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded"></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-4"><label class="font-bold text-gray-400 uppercase italic">Texto Breve</label><textarea id="f-texto" rows="2" class="w-full border p-2 rounded outline-none"></textarea></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">V. Unitário</label><input type="text" id="f-vunit" class="w-full border p-2 rounded"></div>
-                <div><label class="font-bold text-gray-400 uppercase italic">V. Total RC</label><input type="text" id="f-vtotal" class="w-full border p-2 rounded"></div>
-                <div class="md:col-span-4"><label class="font-bold text-blue-600 uppercase italic underline">Minhas Observações (Editável)</label><textarea id="f-obs" rows="3" class="w-full border border-blue-200 bg-blue-50 p-2 rounded outline-none shadow-inner"></textarea></div>
-                <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-400 font-bold uppercase">Cancelar</button>
-                    <button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase shadow-lg">Salvar Dados</button>
-                </div>
+                <div><label class="font-bold text-gray-400 italic">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-4"><label class="font-bold text-blue-600 italic underline">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-blue-50 p-2 rounded italic outline-none"></textarea></div>
+                <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4"><button type="button" onclick="closeModal()" class="px-4 text-gray-400 font-bold uppercase">Cancelar</button><button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase">Salvar</button></div>
             </form>
         </div>
     </div>
 
-    <div id="userModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 text-center">
-            <h2 class="text-xl font-bold mb-6 italic uppercase">Gestão de Acessos</h2>
+    <div id="userModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[110]">
+        <div class="bg-white rounded-lg p-8 w-full max-w-sm text-center">
+            <h2 class="font-bold uppercase mb-6 italic">Novo Usuário</h2>
             <div class="space-y-4">
-                <input type="text" id="new-user" placeholder="Login" class="w-full border p-3 rounded">
-                <input type="password" id="new-pass" placeholder="Senha" class="w-full border p-3 rounded">
-                <button onclick="cadastrarUsuario()" class="w-full bg-slate-900 text-white py-3 rounded font-bold uppercase text-[10px]">Cadastrar Novo</button>
-                <button onclick="closeUserModal()" class="w-full text-slate-400 font-bold uppercase text-[9px]">Fechar</button>
+                <input type="text" id="new-user" placeholder="Login" class="w-full border p-2 rounded">
+                <input type="password" id="new-pass" placeholder="Senha" class="w-full border p-2 rounded">
+                <button onclick="cadastrarUsuario()" class="w-full bg-slate-900 text-white py-2 rounded font-bold uppercase text-[10px]">Cadastrar</button>
+                <button onclick="closeUserModal()" class="text-gray-400 text-[10px] mt-4 uppercase font-bold">Fechar</button>
             </div>
         </div>
     </div>
@@ -166,51 +160,33 @@
     <script>
         const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
         let authKey = localStorage.getItem("sla_auth");
-        let demandas = []; let historico = []; let myCharts = {};
+        let demandas = []; let historico = []; let myCharts = { sla: null, sub: null };
 
-        window.onload = () => { 
-            lucide.createIcons();
-            if (authKey) { 
-                document.getElementById('tela-login').classList.add('hidden');
-                document.getElementById('painel-principal').style.display = "block";
-                loadFromD1(); 
-            } 
-        };
+        window.onload = () => { lucide.createIcons(); if (authKey) { document.getElementById('tela-login').classList.add('hidden'); document.getElementById('painel-principal').style.display = "block"; loadFromD1(); } };
 
         async function tentarLogin() {
-            const u = document.getElementById('login-user').value;
-            const p = document.getElementById('login-pass').value;
-            if(!u || !p) return;
+            const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             const key = `${u}:${p}`;
-            try {
-                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
-                if (res.status === 200) { 
-                    authKey = key; localStorage.setItem("sla_auth", key); 
-                    document.getElementById('tela-login').classList.add('hidden'); 
-                    document.getElementById('painel-principal').style.display = "block";
-                    loadFromD1(); 
-                } else { document.getElementById('login-erro').classList.remove('hidden'); }
-            } catch(e) { alert("Erro ao conectar com o banco de dados."); }
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
+            if (res.status === 200) { authKey = key; localStorage.setItem("sla_auth", key); document.getElementById('tela-login').classList.add('hidden'); document.getElementById('painel-principal').style.display = "block"; loadFromD1(); }
+            else { document.getElementById('login-erro').classList.remove('hidden'); }
         }
 
         function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
         function openUserModal() { document.getElementById('userModal').classList.remove('hidden'); }
         function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
         async function cadastrarUsuario() {
-            const username = document.getElementById('new-user').value;
-            const password = document.getElementById('new-pass').value;
+            const username = document.getElementById('new-user').value; const password = document.getElementById('new-pass').value;
             await fetch(`${API_URL}/save_user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ username, password }) });
             alert("Sucesso!"); closeUserModal();
         }
 
         async function loadFromD1() {
-            try {
-                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
-                const data = await res.json();
-                demandas = data.filter(d => !d.status_final);
-                historico = data.filter(d => d.status_final);
-                render();
-            } catch (e) { console.error(e); }
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+            const data = await res.json();
+            demandas = data.filter(d => !d.status_final);
+            historico = data.filter(d => d.status_final);
+            render();
         }
 
         async function saveToD1(item) {
@@ -226,11 +202,10 @@
                 await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
                 for (const n of rows) {
                     const rId = String(n.ReqC || n.reqc || ''); if (!rId) continue;
-                    await saveToD1({
-                        sla_inicial: parseInt(n.SLA || n.sla || 0), data_referencia: hoje, reqc: rId, item: String(n.Item || n.item || '1'),
-                        nome: n['Nome do Requisitante'] || n.nome || '', ws: n.WS || n.ws || '', subtipo: n.Subtipo || n.subtipo || '',
-                        texto: n['Texto Breve'] || n.texto || '', vunit: n['Valor Unitario'] || n.vunit || 0, vtotal: n['Valor Total RC'] || n.vtotal || 0,
-                        observacao: n.Observações || n.observacao || ''
+                    await saveToD1({ 
+                        sla_inicial: parseInt(n.SLA || 0), data_referencia: hoje, reqc: rId, item: String(n.Item || '1'), 
+                        nome: n['Nome do Requisitante'] || '', ws: n.WS || '', subtipo: n.Subtipo || '', texto: n['Texto Breve'] || '',
+                        vunit: n['Valor Unitario'] || 0, vtotal: n['Valor Total RC'] || 0, observacao: n.Observações || '' 
                     });
                 }
                 loadFromD1();
@@ -238,108 +213,94 @@
             reader.readAsBinaryString(e.target.files[0]);
         });
 
-        const colunas = [
-            {key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},
-            {key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},
-            {key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}
-        ];
+        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
 
         function render() {
             const busca = document.getElementById('inputBusca').value.toLowerCase();
             const corpo = document.getElementById('tabela-corpo');
             const histBody = document.getElementById('tabela-historico');
-            const empty = document.getElementById('empty-state');
-            
-            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-4">${c.label}</th>`).join('') + '<th class="p-4 text-center">Ações</th>';
-            document.getElementById('header-historico').innerHTML = `<th class="p-3 text-blue-600">STATUS</th>` + colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">AÇÃO</th>';
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">Gestão</th>';
+            document.getElementById('header-historico').innerHTML = `<th class="p-3">Status</th>` + colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3">Ação</th>';
             
             corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
-            const filtradas = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
-            if(filtradas.length === 0 && demandas.length > 0) empty.classList.remove('hidden'); else empty.classList.add('hidden');
-
-            filtradas.forEach((d, idx) => {
+            demandas.forEach((d, idx) => {
+                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
                 const sla = calcularSlaAtual(d);
-                let cor = "bg-blue-100 text-blue-700 border-blue-200";
+                let cor = "bg-blue-100 text-blue-700";
                 if (sla > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
                 else if (sla > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
                 else if (sla > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
                 else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else { counts.c15++; }
 
-                corpo.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-all border-b border-slate-50">
-                        <td class="p-3"><span class="px-2 py-1 rounded font-black border text-[10px] ${cor}">${sla}d</span></td>
-                        <td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td>
-                        <td class="p-3">${d.ws || ''}</td><td class="p-3 text-blue-600 font-bold italic">${d.subtipo}</td>
-                        <td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto || ''}</td>
-                        <td class="p-3 text-right">${fmtMoeda(d.vunit)}</td><td class="p-3 text-right font-bold text-slate-800">${fmtMoeda(d.vtotal)}</td>
-                        <td class="p-3 text-blue-800 text-[10px] italic">${d.observacao || ''}</td>
-                        <td class="p-3 flex gap-1 justify-center">
-                            <button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="p-1.5 text-green-600 hover:bg-green-100 rounded" title="Concluir"><i data-lucide="check" class="w-3 h-3"></i></button>
-                            <button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="p-1.5 text-red-600 hover:bg-red-100 rounded" title="Cancelar"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                            <button onclick="openEdit(${demandas.indexOf(d)})" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded" title="Editar"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
-                        </td>
-                    </tr>`;
+                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${sla}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${demandas.indexOf(d)})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
             });
 
             historico.forEach((h, idx) => {
-                histBody.innerHTML += `
-                    <tr class="border-b bg-white text-[9px] hover:bg-slate-50">
-                        <td class="p-3 font-black ${h.status_final==='Concluído'?'text-emerald-600':'text-red-500'} uppercase italic">${h.status_final}</td>
-                        <td class="p-3 font-bold">${h.sla_no_fim}d</td><td class="p-3 font-bold">${h.reqc}</td><td class="p-3">${h.item}</td><td class="p-3">${h.nome}</td>
-                        <td class="p-3">${h.ws}</td><td class="p-3 text-blue-500 font-bold">${h.subtipo}</td><td class="p-3 col-texto-breve">${h.texto}</td>
-                        <td class="p-3 text-right">${fmtMoeda(h.vunit)}</td><td class="p-3 text-right font-bold">${fmtMoeda(h.vtotal)}</td>
-                        <td class="p-3 italic text-slate-400">${h.observacao || ''}</td>
-                        <td class="p-3 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black hover:underline uppercase">Reativar</button></td>
-                    </tr>`;
+                histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-2 font-black ${h.status_final==='Concluído'?'text-emerald-600':'text-red-500'} italic">${h.status_final}</td><td class="p-2 font-bold">${h.sla_no_fim}d</td><td class="p-2 font-bold">${h.reqc}</td><td class="p-2">${h.item}</td><td class="p-2">${h.nome}</td><td class="p-2">${h.ws}</td><td class="p-2">${h.subtipo}</td><td class="p-2">${h.texto}</td><td class="p-2">${fmtMoeda(h.vunit)}</td><td class="p-2 font-bold">${fmtMoeda(h.vtotal)}</td><td class="p-2">${h.observacao || ''}</td><td class="p-2 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black">REATIVAR</button></td></tr>`;
             });
 
-            document.getElementById('count-15').innerText = counts.c15;
-            document.getElementById('count-30').innerText = counts.c30;
-            document.getElementById('count-60').innerText = counts.c60;
-            document.getElementById('count-90').innerText = counts.c90;
-            document.getElementById('count-91').innerText = counts.c91;
+            document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
             lucide.createIcons();
         }
 
         async function gerarPDF() {
             const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
-            pdf.setFontSize(20); pdf.text("RELATORIO ESTRATEGICO SLA MESTRE", 15, 15);
+            pdf.setFontSize(20); pdf.text("RELATORIO SLA MESTRE", 15, 15);
             const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0);
             const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
             pdf.addImage(imgSla, 'PNG', 15, 30, 130, 65); pdf.addImage(imgSub, 'PNG', 160, 30, 110, 65);
-            pdf.autoTable({ startY: 105, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,35), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'grid', styles: { fontSize: 6 } });
-            pdf.save(`SLA_Relatorio.pdf`);
+            pdf.autoTable({ startY: 105, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'grid', styles: { fontSize: 6 } });
+            pdf.save("SLA_Report.pdf");
         }
 
         function openCharts() {
             document.getElementById('chartModal').classList.remove('hidden');
             const counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; const subMap = {};
-            demandas.forEach(d => { const sla = calcularSlaAtual(d); if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++; subMap[d.subtipo] = (subMap[d.subtipo] || 0) + 1; });
-            if(myCharts.sla) myCharts.sla.destroy();
-            myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15','16-30','31-60','61-90','91+'], datasets: [{ label: 'Qtd', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-            if(myCharts.sub) myCharts.sub.destroy();
-            myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], borderWidth:0 }] }, options: { maintainAspectRatio: false, cutout: '75%' } });
+            demandas.forEach(d => {
+                const sla = calcularSlaAtual(d);
+                if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
+                const sub = d.subtipo || "Não Informado"; subMap[sub] = (subMap[sub] || 0) + 1;
+            });
+            
+            // BLINDAGEM DOS GRAFICOS
+            setTimeout(() => {
+                if(myCharts.sla) myCharts.sla.destroy();
+                myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15','16-30','31-60','61-90','91+'], datasets: [{ label: 'Qtd', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                
+                if(myCharts.sub) myCharts.sub.destroy();
+                myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9'] }] }, options: { maintainAspectRatio: false, cutout: '70%' } });
+            }, 100);
         }
 
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
+        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
         function calcularSlaAtual(item) { 
-            const base = parseInt(item.sla_inicial); 
-            const v = isNaN(base) ? 0 : base;
+            const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base;
             if (item.sla_no_fim !== undefined) return item.sla_no_fim; 
             return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); 
         }
         async function setStatus(idx, s) { let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
-        document.getElementById('demandaForm').onsubmit = async (e) => { e.preventDefault(); const idx = document.getElementById('editIndex').value; const data = { sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, subtipo: document.getElementById('f-sub').value, observacao: document.getElementById('f-obs').value, ws: idx !== "" ? demandas[idx].ws : "", texto: idx !== "" ? demandas[idx].texto : "", vunit: idx !== "" ? demandas[idx].vunit : 0, vtotal: idx !== "" ? demandas[idx].vtotal : 0 }; await saveToD1(data); closeModal(); loadFromD1(); };
-        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('modalTitle').innerText = "Nova Demanda"; document.getElementById('formModal').classList.remove('hidden'); }
-        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome; document.getElementById('f-sub').value = d.subtipo; document.getElementById('f-obs').value = d.observacao; document.getElementById('formModal').classList.remove('hidden'); }
-        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
-        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
-        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+        
+        document.getElementById('demandaForm').onsubmit = async (e) => {
+            e.preventDefault(); const idx = document.getElementById('editIndex').value;
+            const data = { 
+                sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), 
+                reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, 
+                nome: idx !== "" ? demandas[idx].nome : "", subtipo: idx !== "" ? demandas[idx].subtipo : "", observacao: document.getElementById('f-obs').value,
+                ws: idx !== "" ? demandas[idx].ws : "", texto: idx !== "" ? demandas[idx].texto : "", vunit: idx !== "" ? demandas[idx].vunit : 0, vtotal: idx !== "" ? demandas[idx].vtotal : 0
+            };
+            await saveToD1(data); closeModal(); loadFromD1();
+        };
+
+        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('formModal').classList.remove('hidden'); }
+        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); }
     </script>
 </body>
 </html>
