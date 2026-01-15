@@ -178,12 +178,17 @@
         }
 
         function render() {
-            renderHeaders();
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
-            const corpo = document.getElementById('tabela-corpo');
-            const histBody = document.getElementById('tabela-historico');
-            corpo.innerHTML = ""; histBody.innerHTML = "";
-            let c = { v: 0, a: 0, r: 0 };
+    renderHeaders(); // <--- ESSA LINHA PRECISA ESTAR AQUI NO TOPO
+    
+    const busca = document.getElementById('inputBusca').value.toLowerCase();
+    const corpo = document.getElementById('tabela-corpo');
+    const histBody = document.getElementById('tabela-historico');
+    
+    corpo.innerHTML = ""; 
+    histBody.innerHTML = "";
+    
+    // ... resto do código (o laço forEach)
+}
 
             demandas.forEach((d, idx) => {
                 if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
@@ -297,3 +302,4 @@
     </script>
 </body>
 </html>
+
