@@ -38,9 +38,42 @@
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        .col-texto-breve { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a5b7; font-weight: 600; }
+        /* TABELA: Colunas Redimensionáveis */
+        th { 
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a5b7; font-weight: 600; 
+            resize: horizontal; /* Permite arrastar */
+            overflow: auto; /* Necessário para resize */
+            min-width: 80px; /* Tamanho mínimo */
+        }
+        
         td { font-size: 13px; color: #3f4254; font-weight: 500; vertical-align: middle; }
+
+        /* TOOLTIP para Observação e Texto Breve */
+        .hover-expand {
+            position: relative;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: help;
+        }
+        
+        .hover-expand:hover::after {
+            content: attr(data-fulltext); /* Pega o texto do atributo */
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: #333;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            white-space: normal;
+            z-index: 100;
+            width: 250px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-size: 11px;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body class="text-gray-800 h-screen overflow-hidden flex">
@@ -95,7 +128,7 @@
         
         <div class="p-4 border-t border-gray-700">
             <div class="flex items-center gap-3">
-                <img id="sidebar-avatar" src="" class="w-10 h-10 rounded-full border-2 border-indigo-500 object-cover cursor-pointer hover:opacity-80 transition-opacity" onclick="triggerAvatarUpload()" title="Alterar Foto">
+                <img id="sidebar-avatar" src="" class="w-14 h-14 rounded-full border-2 border-indigo-500 object-cover cursor-pointer hover:opacity-80 transition-opacity" onclick="triggerAvatarUpload()" title="Clique para alterar foto">
                 <div>
                     <p id="sidebar-name" class="text-white text-sm font-bold capitalize">Usuário</p>
                     <p class="text-gray-500 text-xs">Conectado</p>
@@ -127,7 +160,7 @@
                     </div>
                     
                     <div class="relative avatar-container cursor-pointer" onclick="triggerAvatarUpload()">
-                        <img id="header-avatar" src="" class="w-10 h-10 rounded-xl shadow-sm object-cover">
+                        <img id="header-avatar" src="" class="w-12 h-12 rounded-xl shadow-sm object-cover">
                         <div class="avatar-overlay absolute inset-0 rounded-xl flex items-center justify-center text-white">
                             <i data-lucide="camera" class="w-4 h-4"></i>
                         </div>
@@ -358,7 +391,19 @@
                 else if (sla > 15) { badgeClass = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else { counts.c15++; }
 
-                corpo.innerHTML += `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"><td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${sla} dias</span></td><td class="px-6 py-4 font-bold text-gray-700">${d.reqc}</td><td class="px-6 py-4">${d.item}</td><td class="px-6 py-4 text-gray-500">${d.nome}</td><td class="px-6 py-4 text-gray-500">${d.ws}</td><td class="px-6 py-4"><span class="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">${d.subtipo}</span></td><td class="px-6 py-4 col-texto-breve text-gray-400 text-xs" title="${d.texto}">${d.texto}</td><td class="px-6 py-4">${fmtMoeda(d.vunit)}</td><td class="px-6 py-4 font-bold text-gray-700">${fmtMoeda(d.vtotal)}</td><td class="px-6 py-4 text-gray-400 italic text-xs max-w-[150px] truncate">${d.observacao || '-'}</td><td class="px-6 py-4"><div class="flex items-center justify-center gap-2"><button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"><i data-lucide="x" class="w-4 h-4"></i></button><button onclick="openEdit(${demandas.indexOf(d)})" class="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"><i data-lucide="pencil" class="w-4 h-4"></i></button></div></td></tr>`;
+                // TEXTO BREVE e OBSERVAÇÃO com Hover-Expand
+                corpo.innerHTML += `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
+                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${sla} dias</span></td>
+                    <td class="px-6 py-4 font-bold text-gray-700">${d.reqc}</td>
+                    <td class="px-6 py-4">${d.item}</td>
+                    <td class="px-6 py-4 text-gray-500">${d.nome}</td>
+                    <td class="px-6 py-4 text-gray-500">${d.ws}</td>
+                    <td class="px-6 py-4"><span class="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">${d.subtipo}</span></td>
+                    <td class="px-6 py-4 hover-expand text-gray-400 text-xs" data-fulltext="${d.texto}">${d.texto}</td>
+                    <td class="px-6 py-4">${fmtMoeda(d.vunit)}</td>
+                    <td class="px-6 py-4 font-bold text-gray-700">${fmtMoeda(d.vtotal)}</td>
+                    <td class="px-6 py-4 hover-expand text-gray-400 italic text-xs" data-fulltext="${d.observacao || ''}">${d.observacao || '-'}</td>
+                    <td class="px-6 py-4"><div class="flex items-center justify-center gap-2"><button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"><i data-lucide="x" class="w-4 h-4"></i></button><button onclick="openEdit(${demandas.indexOf(d)})" class="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"><i data-lucide="pencil" class="w-4 h-4"></i></button></div></td></tr>`;
             });
 
             historico.forEach((h, idx) => {
