@@ -17,7 +17,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         
-        /* Sidebar Gradient */
+        /* Sidebar e Cores */
         .sidebar-bg { background-color: #1e1e2d; }
         .active-menu { background-color: #2b2b40; color: white; border-left: 4px solid #6366f1; }
         .inactive-menu { color: #a2a3b7; }
@@ -28,13 +28,13 @@
             background: linear-gradient(135deg, #1e1e2d 0%, #2d2d44 100%);
         }
 
-        /* Scrollbar fina */
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        /* Ajustes de Tabela */
+        /* Ajustes Tabela */
         .col-texto-breve { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a5b7; font-weight: 600; }
         td { font-size: 13px; color: #3f4254; font-weight: 500; vertical-align: middle; }
@@ -54,64 +54,46 @@
             <div class="space-y-5 text-left">
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase ml-1">Usuário</label>
-                    <input type="text" id="login-user" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-medium">
+                    <input type="text" id="login-user" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium">
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase ml-1">Senha</label>
-                    <input type="password" id="login-pass" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-medium">
+                    <input type="password" id="login-pass" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium">
                 </div>
                 <button onclick="tentarLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-500/30">ACESSAR PAINEL</button>
             </div>
-            <p id="login-erro" class="text-red-500 mt-4 text-xs font-bold hidden bg-red-50 p-2 rounded">Credenciais Inválidas</p>
+            <p id="login-erro" class="text-red-500 mt-4 text-xs font-bold hidden bg-red-50 p-2 rounded text-center">Credenciais Inválidas</p>
         </div>
     </div>
 
     <aside id="sidebar" class="sidebar-bg w-64 flex-shrink-0 hidden flex-col transition-all duration-300 z-50 h-full">
         <div class="h-20 flex items-center px-8 border-b border-gray-700">
             <div class="flex items-center gap-3">
-                <div class="bg-indigo-500 p-1.5 rounded-lg">
-                    <i data-lucide="bar-chart-2" class="text-white w-5 h-5"></i>
-                </div>
+                <div class="bg-indigo-500 p-1.5 rounded-lg"><i data-lucide="bar-chart-2" class="text-white w-5 h-5"></i></div>
                 <span class="text-white font-bold text-lg tracking-wide">SLA Mestre</span>
             </div>
         </div>
 
         <nav class="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
             <div class="text-xs font-bold text-gray-500 uppercase px-4 mb-2">Principal</div>
-            
-            <a href="#" onclick="showSection('dashboard')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg active-menu transition-colors">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
-            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg active-menu transition-colors"><i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard</a>
             
             <div class="text-xs font-bold text-gray-500 uppercase px-4 mt-6 mb-2">Gestão</div>
-            
-            <a href="#" onclick="openAddModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
-                <i data-lucide="plus-square" class="w-5 h-5"></i> Novo Manual
-            </a>
-            <a href="#" onclick="document.getElementById('fileInput').click()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
-                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Excel
-                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
-            </a>
-            <a href="#" onclick="openArchive()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
-                <i data-lucide="archive" class="w-5 h-5"></i> Histórico
-            </a>
+            <a href="#" onclick="openAddModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors"><i data-lucide="plus-square" class="w-5 h-5"></i> Novo Manual</a>
+            <a href="#" onclick="document.getElementById('fileInput').click()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Excel<input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv"></a>
+            <a href="#" onclick="openArchive()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors"><i data-lucide="archive" class="w-5 h-5"></i> Histórico</a>
 
             <div class="text-xs font-bold text-gray-500 uppercase px-4 mt-6 mb-2">Sistema</div>
-            
-            <a href="#" onclick="openUserModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
-                <i data-lucide="users" class="w-5 h-5"></i> Usuários
-            </a>
-            <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:text-red-400 transition-colors">
-                <i data-lucide="log-out" class="w-5 h-5"></i> Sair
-            </a>
+            <a href="#" onclick="openUserModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors"><i data-lucide="users" class="w-5 h-5"></i> Usuários</a>
+            <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:text-red-400 transition-colors"><i data-lucide="log-out" class="w-5 h-5"></i> Sair</a>
         </nav>
         
         <div class="p-4 border-t border-gray-700">
             <div class="flex items-center gap-3">
-                <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" class="w-10 h-10 rounded-full border-2 border-indigo-500">
+                <img id="sidebar-avatar" src="" class="w-10 h-10 rounded-full border-2 border-indigo-500">
                 <div>
-                    <p class="text-white text-sm font-bold">Administrador</p>
-                    <p class="text-gray-500 text-xs">Online</p>
+                    <p id="sidebar-name" class="text-white text-sm font-bold capitalize">Usuário</p>
+                    <p class="text-gray-500 text-xs">Conectado</p>
                 </div>
             </div>
         </div>
@@ -120,7 +102,7 @@
     <div id="main-content" class="flex-1 flex flex-col h-full hidden bg-[#f3f4f6]">
         
         <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-40">
-            <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Visão Geral</h1>
             
             <div class="flex items-center gap-6">
                 <div class="relative">
@@ -129,20 +111,16 @@
                 </div>
                 
                 <div class="flex gap-3">
-                    <button onclick="gerarPDF()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Exportar PDF">
-                        <i data-lucide="download" class="w-5 h-5"></i>
-                    </button>
-                    <button onclick="openCharts()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Expandir Gráficos">
-                        <i data-lucide="maximize-2" class="w-5 h-5"></i>
-                    </button>
+                    <button onclick="gerarPDF()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Exportar PDF"><i data-lucide="download" class="w-5 h-5"></i></button>
+                    <button onclick="openCharts()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Expandir Gráficos"><i data-lucide="maximize-2" class="w-5 h-5"></i></button>
                 </div>
 
                 <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                     <div class="text-right hidden md:block">
-                        <p class="text-sm font-bold text-gray-800">João Silva</p>
-                        <p class="text-xs text-gray-500">Gestor SLA</p>
+                        <p id="header-name" class="text-sm font-bold text-gray-800 capitalize">Usuário</p>
+                        <p class="text-xs text-gray-500">Gestor</p>
                     </div>
-                    <img src="https://ui-avatars.com/api/?name=Joao+Silva&background=random" class="w-10 h-10 rounded-xl shadow-sm">
+                    <img id="header-avatar" src="" class="w-10 h-10 rounded-xl shadow-sm">
                 </div>
             </div>
         </header>
@@ -150,97 +128,37 @@
         <main class="flex-1 overflow-y-auto p-8">
             
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">0-15 Dias</p>
-                        <h3 id="count-15" class="text-2xl font-bold text-blue-600">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                        <i data-lucide="clock" class="w-5 h-5"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">16-30 Dias</p>
-                        <h3 id="count-30" class="text-2xl font-bold text-yellow-500">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
-                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">31-60 Dias</p>
-                        <h3 id="count-60" class="text-2xl font-bold text-orange-500">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">61-90 Dias</p>
-                        <h3 id="count-90" class="text-2xl font-bold text-red-500">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
-                        <i data-lucide="flame" class="w-5 h-5"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                    <div>
-                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">Crítico 91+</p>
-                        <h3 id="count-91" class="text-2xl font-bold text-purple-600">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                        <i data-lucide="bomb" class="w-5 h-5"></i>
-                    </div>
-                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-xs font-bold uppercase mb-1">0-15 Dias</p><h3 id="count-15" class="text-2xl font-bold text-blue-600">0</h3></div><div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><i data-lucide="clock" class="w-5 h-5"></i></div></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-xs font-bold uppercase mb-1">16-30 Dias</p><h3 id="count-30" class="text-2xl font-bold text-yellow-500">0</h3></div><div class="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600"><i data-lucide="alert-circle" class="w-5 h-5"></i></div></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-xs font-bold uppercase mb-1">31-60 Dias</p><h3 id="count-60" class="text-2xl font-bold text-orange-500">0</h3></div><div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-xs font-bold uppercase mb-1">61-90 Dias</p><h3 id="count-90" class="text-2xl font-bold text-red-500">0</h3></div><div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600"><i data-lucide="flame" class="w-5 h-5"></i></div></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"><div><p class="text-gray-500 text-xs font-bold uppercase mb-1">Crítico 91+</p><h3 id="count-91" class="text-2xl font-bold text-purple-600">0</h3></div><div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600"><i data-lucide="bomb" class="w-5 h-5"></i></div></div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-gray-800">Aging de SLA</h3>
-                        <button class="text-gray-400 hover:text-indigo-600"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
-                    </div>
-                    <div class="relative h-[250px] w-full">
-                        <canvas id="chartSla"></canvas>
-                    </div>
+                    <h3 class="font-bold text-gray-800 mb-6">Aging de SLA</h3>
+                    <div class="relative h-[250px] w-full"><canvas id="chartSla"></canvas></div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-gray-800">Distribuição por Subtipo</h3>
-                        <button class="text-gray-400 hover:text-indigo-600"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
-                    </div>
-                    <div class="relative h-[250px] w-full">
-                        <canvas id="chartSubtipo"></canvas>
-                    </div>
+                    <h3 class="font-bold text-gray-800 mb-6">Distribuição por Subtipo</h3>
+                    <div class="relative h-[250px] w-full"><canvas id="chartSubtipo"></canvas></div>
                 </div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                 <div class="p-6 border-b border-gray-100 flex justify-between items-center">
                     <h3 class="font-bold text-gray-800 text-lg">Demandas Ativas</h3>
-                    <span class="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">Atualizado Agora</span>
+                    <span class="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">Live Data</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50/50 border-b border-gray-100">
-                            <tr id="header-principal"></tr>
-                        </thead>
+                        <thead class="bg-gray-50/50 border-b border-gray-100"><tr id="header-principal"></tr></thead>
                         <tbody id="tabela-corpo" class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
             </div>
-
-            <div class="text-center mt-8 text-gray-400 text-xs">
-                &copy; 2026 SLA System. Todos os direitos reservados.
-            </div>
-
+            <div class="text-center mt-8 text-gray-400 text-xs">&copy; 2026 SLA System. Todos os direitos reservados.</div>
         </main>
     </div>
 
@@ -252,9 +170,7 @@
             </div>
             <div class="flex-1 overflow-auto p-0">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-100 sticky top-0 z-10 text-xs uppercase text-gray-500 font-bold">
-                        <tr id="header-historico"></tr>
-                    </thead>
+                    <thead class="bg-gray-100 sticky top-0 z-10 text-xs uppercase text-gray-500 font-bold"><tr id="header-historico"></tr></thead>
                     <tbody id="tabela-historico" class="divide-y divide-gray-100 text-sm"></tbody>
                 </table>
             </div>
@@ -264,24 +180,24 @@
     <div id="formModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6 pb-4 border-b">
-                <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Nova Demanda</h2>
+                <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Manutenção</h2>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <input type="hidden" id="editIndex">
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">ReqC</label><input type="text" id="f-reqc" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Item</label><input type="text" id="f-item" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Requisitante</label><input type="text" id="f-nome" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">WS</label><input type="text" id="f-ws" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Subtipo</label><input type="text" id="f-sub" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Texto Breve</label><input type="text" id="f-texto" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-                <div class="md:col-span-4"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Observações</label><textarea id="f-obs" rows="3" class="w-full border border-gray-300 bg-gray-50 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Item</label><input type="text" id="f-item" required class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Requisitante</label><input type="text" id="f-nome" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">WS</label><input type="text" id="f-ws" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Texto Breve</label><input type="text" id="f-texto" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-4"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-gray-50 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea></div>
                 <div class="md:col-span-4 flex justify-end gap-3 pt-4 border-t">
                     <button type="button" onclick="closeModal()" class="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="bg-indigo-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30">Salvar Registro</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-indigo-700 shadow-lg">Salvar</button>
                 </div>
             </form>
         </div>
@@ -292,8 +208,8 @@
             <div class="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i data-lucide="user-plus"></i></div>
             <h2 class="text-xl font-bold text-gray-800 mb-6">Novo Usuário</h2>
             <div class="space-y-4">
-                <input type="text" id="new-user" placeholder="Login" class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                <input type="password" id="new-pass" placeholder="Senha" class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="text" id="new-user" placeholder="Login" class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="password" id="new-pass" placeholder="Senha" class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 <button onclick="cadastrarUsuario()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">Cadastrar</button>
                 <button onclick="closeUserModal()" class="text-gray-400 text-sm mt-2 hover:text-gray-600">Cancelar</button>
             </div>
@@ -304,19 +220,25 @@
         <div class="w-full h-full p-8 flex flex-col">
             <div class="flex justify-end mb-4"><button onclick="closeCharts()" class="text-white bg-white/20 p-2 rounded-full hover:bg-white/40"><i data-lucide="x"></i></button></div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-                <div class="bg-white rounded-2xl p-6 flex items-center justify-center"><canvas id="chartSlaFull"></canvas></div> <div class="bg-white rounded-2xl p-6 flex items-center justify-center"><canvas id="chartSubtipoFull"></canvas></div> </div>
+                <div class="bg-white rounded-2xl p-6 flex items-center justify-center relative"><canvas id="chartSlaFull"></canvas></div>
+                <div class="bg-white rounded-2xl p-6 flex items-center justify-center relative"><canvas id="chartSubtipoFull"></canvas></div>
+            </div>
         </div>
     </div>
 
     <script>
         const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
         let authKey = localStorage.getItem("sla_auth");
-        let demandas = []; let historico = []; let myCharts = { sla: null, sub: null };
+        let currentUser = localStorage.getItem("sla_user") || "Usuário"; // Pega o usuário salvo
+        let demandas = []; let historico = []; 
+        let myCharts = { sla: null, sub: null };
+        let myChartsFull = { sla: null, sub: null }; // Variável para os gráficos expandidos
 
         // --- INICIALIZAÇÃO ---
         window.onload = () => { 
             lucide.createIcons(); 
             if (authKey) { 
+                updateProfile(currentUser); // Atualiza perfil na tela
                 document.getElementById('tela-login').classList.add('hidden'); 
                 document.getElementById('sidebar').classList.remove('hidden');
                 document.getElementById('sidebar').classList.add('flex');
@@ -325,14 +247,30 @@
             } 
         };
 
-        // --- LOGIN INTELIGENTE ---
+        // --- FUNÇÃO PARA ATUALIZAR PERFIL ---
+        function updateProfile(username) {
+            currentUser = username;
+            // Atualiza textos
+            document.getElementById('header-name').innerText = username;
+            document.getElementById('sidebar-name').innerText = username;
+            // Gera avatar dinâmico
+            const avatarUrl = `https://ui-avatars.com/api/?name=${username}&background=6366f1&color=fff&bold=true`;
+            document.getElementById('header-avatar').src = avatarUrl;
+            document.getElementById('sidebar-avatar').src = avatarUrl;
+        }
+
+        // --- LOGIN ---
         async function tentarLogin() {
             const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             if(!u || !p) return;
             const key = "Basic " + btoa(`${u}:${p}`);
             const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key.replace("Basic ", "") } });
             if (res.status === 200) { 
-                authKey = key.replace("Basic ", ""); localStorage.setItem("sla_auth", authKey); 
+                authKey = key.replace("Basic ", ""); 
+                localStorage.setItem("sla_auth", authKey); 
+                localStorage.setItem("sla_user", u); // Salva o nome do usuário
+                updateProfile(u); // Atualiza na hora
+                
                 document.getElementById('tela-login').classList.add('hidden'); 
                 document.getElementById('sidebar').classList.remove('hidden');
                 document.getElementById('sidebar').classList.add('flex');
@@ -343,7 +281,7 @@
             }
         }
 
-        function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
+        function logout() { localStorage.removeItem("sla_auth"); localStorage.removeItem("sla_user"); window.location.reload(); }
         
         // --- MODAIS ---
         function openUserModal() { document.getElementById('userModal').classList.remove('hidden'); }
@@ -355,7 +293,7 @@
             alert("Autorizado!"); closeUserModal();
         }
 
-        // --- DADOS ---
+        // --- CARGA DE DADOS ---
         async function loadFromD1() {
             try {
                 const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
@@ -371,7 +309,6 @@
             await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
-        // --- UPLOAD ---
         document.getElementById('fileInput').addEventListener('change', (e) => {
             const reader = new FileReader();
             reader.onload = async (evt) => {
@@ -398,10 +335,7 @@
             const corpo = document.getElementById('tabela-corpo');
             const histBody = document.getElementById('tabela-historico');
             
-            // Cabeçalho Principal (Estilizado)
             document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="px-6 py-4">${c.label}</th>`).join('') + '<th class="px-6 py-4 text-center">AÇÕES</th>';
-            
-            // Cabeçalho Histórico
             document.getElementById('header-historico').innerHTML = `<th class="px-4 py-3">STATUS</th>` + colunas.map(c => `<th class="px-4 py-3">${c.label}</th>`).join('') + '<th class="px-4 py-3 text-center">RESTAURAR</th>';
             
             corpo.innerHTML = ""; histBody.innerHTML = "";
@@ -410,8 +344,6 @@
             demandas.forEach((d, idx) => {
                 if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
                 const sla = calcularSlaAtual(d);
-                
-                // Badges de SLA
                 let badgeClass = "bg-blue-100 text-blue-700";
                 if (sla > 90) { badgeClass = "bg-purple-100 text-purple-700"; counts.c91++; }
                 else if (sla > 60) { badgeClass = "bg-red-100 text-red-700"; counts.c90++; }
@@ -441,7 +373,6 @@
                 </tr>`;
             });
 
-            // Renderiza Histórico
             historico.forEach((h, idx) => {
                 histBody.innerHTML += `
                 <tr class="hover:bg-gray-50 border-b border-gray-100">
@@ -460,27 +391,25 @@
                 </tr>`;
             });
 
-            // Atualiza Cards do Topo
-            document.getElementById('count-15').innerText = counts.c15; 
-            document.getElementById('count-30').innerText = counts.c30; 
-            document.getElementById('count-60').innerText = counts.c60; 
-            document.getElementById('count-90').innerText = counts.c90; 
-            document.getElementById('count-91').innerText = counts.c91;
-            
+            document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
             lucide.createIcons();
-            updateCharts(counts, demandas); // Atualiza gráficos na tela principal
+            updateCharts(counts, demandas, false); // Atualiza apenas os gráficos principais
         }
 
-        // --- GRÁFICOS INTEGRADOS ---
-        function updateCharts(counts, data) {
-            // Prepara dados subtipo
+        // --- GRÁFICOS (PRINCIPAIS E EXPANDIDOS) ---
+        function updateCharts(counts, data, isFull = false) {
             const subMap = {};
             data.forEach(d => { const s = d.subtipo || "Não Informado"; subMap[s] = (subMap[s] || 0) + 1; });
 
-            // Gráfico Barras (SLA)
-            const ctxSla = document.getElementById('chartSla');
-            if(myCharts.sla) myCharts.sla.destroy();
-            myCharts.sla = new Chart(ctxSla, {
+            // Define quais IDs usar (Principais ou Fullscreen)
+            const idSla = isFull ? 'chartSlaFull' : 'chartSla';
+            const idSub = isFull ? 'chartSubtipoFull' : 'chartSubtipo';
+            const chartObj = isFull ? myChartsFull : myCharts;
+
+            // Gráfico Barras
+            const ctxSla = document.getElementById(idSla);
+            if(chartObj.sla) chartObj.sla.destroy();
+            chartObj.sla = new Chart(ctxSla, {
                 type: 'bar',
                 data: {
                     labels: ['0-15', '16-30', '31-60', '61-90', '91+'],
@@ -489,7 +418,7 @@
                         data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91],
                         backgroundColor: ['#3b82f6', '#eab308', '#f97316', '#ef4444', '#9333ea'],
                         borderRadius: 6,
-                        barThickness: 30
+                        barThickness: isFull ? 50 : 30
                     }]
                 },
                 options: {
@@ -500,10 +429,10 @@
                 }
             });
 
-            // Gráfico Rosquinha (Subtipos)
-            const ctxSub = document.getElementById('chartSubtipo');
-            if(myCharts.sub) myCharts.sub.destroy();
-            myCharts.sub = new Chart(ctxSub, {
+            // Gráfico Rosquinha
+            const ctxSub = document.getElementById(idSub);
+            if(chartObj.sub) chartObj.sub.destroy();
+            chartObj.sub = new Chart(ctxSub, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(subMap),
@@ -522,31 +451,31 @@
             });
         }
 
-        // --- PDF ---
+        // --- EXPANDIR GRÁFICOS (A CORREÇÃO) ---
+        function openCharts() { 
+            document.getElementById('chartModal').classList.remove('hidden');
+            // Recalcula dados para desenhar no modal fullscreen
+            let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
+            demandas.forEach(d => {
+                const sla = calcularSlaAtual(d);
+                if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
+            });
+            // Desenha nos canvas Fullscreen
+            updateCharts(counts, demandas, true);
+        }
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+
+        // --- PDF & OUTRAS FUNÇÕES ---
         async function gerarPDF() {
             const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
             pdf.setFontSize(18); pdf.text("Relatório Executivo de SLA", 15, 15);
-            pdf.setFontSize(10); pdf.text("Gerado em: " + new Date().toLocaleDateString(), 15, 22);
-            
-            // Pega imagem dos gráficos
             const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0);
             const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
-            
-            pdf.addImage(imgSla, 'PNG', 15, 30, 130, 60); 
-            pdf.addImage(imgSub, 'PNG', 160, 30, 120, 60);
-            
-            pdf.autoTable({ 
-                startY: 100, 
-                head: [colunas.map(c => c.label)], 
-                body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), 
-                theme: 'striped',
-                headStyles: { fillColor: [30, 41, 59] },
-                styles: { fontSize: 7 } 
-            });
+            pdf.addImage(imgSla, 'PNG', 15, 30, 130, 60); pdf.addImage(imgSub, 'PNG', 160, 30, 120, 60);
+            pdf.autoTable({ startY: 100, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'striped', headStyles: { fillColor: [30, 41, 59] }, styles: { fontSize: 7 } });
             pdf.save("Dashboard_SLA.pdf");
         }
 
-        // --- AUXILIARES ---
         function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
@@ -554,14 +483,12 @@
         async function setStatus(idx, s) { if(!confirm(`Confirmar status: ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { if(!confirm("Reativar esta demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
 
-        // --- FORMULARIO SALVAR ---
         document.getElementById('demandaForm').onsubmit = async (e) => {
             e.preventDefault(); const idx = document.getElementById('editIndex').value;
             const data = { 
                 sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, 
                 item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, 
-                texto: document.getElementById('f-texto').value, 
-                vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), 
+                texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), 
                 observacao: document.getElementById('f-obs').value 
             };
             await saveToD1(data); closeModal(); loadFromD1();
@@ -579,13 +506,6 @@
         function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
         function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
         function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
-        
-        // Funções para manter compatibilidade com botões antigos que chamei no código novo
-        function openCharts() { 
-            // Agora os gráficos já estão na tela, mas podemos dar um scroll até eles ou abrir modal se preferir
-             document.getElementById('chartModal').classList.remove('hidden'); // Abre modal fullscreen opcional
-        } 
-        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
