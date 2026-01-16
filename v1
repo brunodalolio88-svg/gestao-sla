@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLA Mestre - Dashboard Premium</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        /* Sidebar Gradient */
+        .sidebar-bg { background-color: #1e1e2d; }
+        .active-menu { background-color: #2b2b40; color: white; border-left: 4px solid #6366f1; }
+        .inactive-menu { color: #a2a3b7; }
+        .inactive-menu:hover { color: white; background-color: #2b2b40; }
+
+        /* Login Background */
+        #tela-login {
+            background: linear-gradient(135deg, #1e1e2d 0%, #2d2d44 100%);
+        }
+
+        /* Scrollbar fina */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        /* Ajustes de Tabela */
+        .col-texto-breve { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a5b7; font-weight: 600; }
+        td { font-size: 13px; color: #3f4254; font-weight: 500; vertical-align: middle; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen overflow-hidden flex">
+
+    <div id="tela-login" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+            <div class="mb-8">
+                <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="layout-dashboard" class="text-white w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Bem-vindo</h2>
+                <p class="text-gray-400 text-xs mt-1">SLA Management System</p>
+            </div>
+            <div class="space-y-5 text-left">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">Usuário</label>
+                    <input type="text" id="login-user" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-medium">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">Senha</label>
+                    <input type="password" id="login-pass" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-medium">
+                </div>
+                <button onclick="tentarLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-500/30">ACESSAR PAINEL</button>
+            </div>
+            <p id="login-erro" class="text-red-500 mt-4 text-xs font-bold hidden bg-red-50 p-2 rounded">Credenciais Inválidas</p>
+        </div>
+    </div>
+
+    <aside id="sidebar" class="sidebar-bg w-64 flex-shrink-0 hidden flex-col transition-all duration-300 z-50 h-full">
+        <div class="h-20 flex items-center px-8 border-b border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-500 p-1.5 rounded-lg">
+                    <i data-lucide="bar-chart-2" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="text-white font-bold text-lg tracking-wide">SLA Mestre</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+            <div class="text-xs font-bold text-gray-500 uppercase px-4 mb-2">Principal</div>
+            
+            <a href="#" onclick="showSection('dashboard')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg active-menu transition-colors">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-xs font-bold text-gray-500 uppercase px-4 mt-6 mb-2">Gestão</div>
+            
+            <a href="#" onclick="openAddModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
+                <i data-lucide="plus-square" class="w-5 h-5"></i> Novo Manual
+            </a>
+            <a href="#" onclick="document.getElementById('fileInput').click()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Excel
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+            </a>
+            <a href="#" onclick="openArchive()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
+                <i data-lucide="archive" class="w-5 h-5"></i> Histórico
+            </a>
+
+            <div class="text-xs font-bold text-gray-500 uppercase px-4 mt-6 mb-2">Sistema</div>
+            
+            <a href="#" onclick="openUserModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu transition-colors">
+                <i data-lucide="users" class="w-5 h-5"></i> Usuários
+            </a>
+            <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:text-red-400 transition-colors">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Sair
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-700">
+            <div class="flex items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" class="w-10 h-10 rounded-full border-2 border-indigo-500">
+                <div>
+                    <p class="text-white text-sm font-bold">Administrador</p>
+                    <p class="text-gray-500 text-xs">Online</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="main-content" class="flex-1 flex flex-col h-full hidden bg-[#f3f4f6]">
+        
+        <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-40">
+            <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+            
+            <div class="flex items-center gap-6">
+                <div class="relative">
+                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Buscar ReqC, Nome..." class="w-64 pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 border-none outline-none text-sm text-gray-600 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="gerarPDF()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Exportar PDF">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="openCharts()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Expandir Gráficos">
+                        <i data-lucide="maximize-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
+                    <div class="text-right hidden md:block">
+                        <p class="text-sm font-bold text-gray-800">João Silva</p>
+                        <p class="text-xs text-gray-500">Gestor SLA</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Joao+Silva&background=random" class="w-10 h-10 rounded-xl shadow-sm">
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">0-15 Dias</p>
+                        <h3 id="count-15" class="text-2xl font-bold text-blue-600">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">16-30 Dias</p>
+                        <h3 id="count-30" class="text-2xl font-bold text-yellow-500">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
+                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">31-60 Dias</p>
+                        <h3 id="count-60" class="text-2xl font-bold text-orange-500">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">61-90 Dias</p>
+                        <h3 id="count-90" class="text-2xl font-bold text-red-500">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                        <i data-lucide="flame" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <p class="text-gray-500 text-xs font-bold uppercase mb-1">Crítico 91+</p>
+                        <h3 id="count-91" class="text-2xl font-bold text-purple-600">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                        <i data-lucide="bomb" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800">Aging de SLA</h3>
+                        <button class="text-gray-400 hover:text-indigo-600"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="relative h-[250px] w-full">
+                        <canvas id="chartSla"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800">Distribuição por Subtipo</h3>
+                        <button class="text-gray-400 hover:text-indigo-600"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="relative h-[250px] w-full">
+                        <canvas id="chartSubtipo"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-lg">Demandas Ativas</h3>
+                    <span class="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">Atualizado Agora</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50/50 border-b border-gray-100">
+                            <tr id="header-principal"></tr>
+                        </thead>
+                        <tbody id="tabela-corpo" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="text-center mt-8 text-gray-400 text-xs">
+                &copy; 2026 SLA System. Todos os direitos reservados.
+            </div>
+
+        </main>
+    </div>
+
+    <div id="archiveModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[95%] h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-800">Histórico de Demandas</h3>
+                <button onclick="closeArchive()" class="p-2 hover:bg-gray-200 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-0">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-100 sticky top-0 z-10 text-xs uppercase text-gray-500 font-bold">
+                        <tr id="header-historico"></tr>
+                    </thead>
+                    <tbody id="tabela-historico" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="formModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Nova Demanda</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <input type="hidden" id="editIndex">
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">ReqC</label><input type="text" id="f-reqc" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Item</label><input type="text" id="f-item" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Requisitante</label><input type="text" id="f-nome" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">WS</label><input type="text" id="f-ws" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Subtipo</label><input type="text" id="f-sub" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Texto Breve</label><input type="text" id="f-texto" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div class="md:col-span-4"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Observações</label><textarea id="f-obs" rows="3" class="w-full border border-gray-300 bg-gray-50 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea></div>
+                <div class="md:col-span-4 flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal()" class="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="userModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center">
+            <div class="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i data-lucide="user-plus"></i></div>
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Novo Usuário</h2>
+            <div class="space-y-4">
+                <input type="text" id="new-user" placeholder="Login" class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="password" id="new-pass" placeholder="Senha" class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <button onclick="cadastrarUsuario()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">Cadastrar</button>
+                <button onclick="closeUserModal()" class="text-gray-400 text-sm mt-2 hover:text-gray-600">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chartModal" class="hidden fixed inset-0 bg-gray-900/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="w-full h-full p-8 flex flex-col">
+            <div class="flex justify-end mb-4"><button onclick="closeCharts()" class="text-white bg-white/20 p-2 rounded-full hover:bg-white/40"><i data-lucide="x"></i></button></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                <div class="bg-white rounded-2xl p-6 flex items-center justify-center"><canvas id="chartSlaFull"></canvas></div> <div class="bg-white rounded-2xl p-6 flex items-center justify-center"><canvas id="chartSubtipoFull"></canvas></div> </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
+        let authKey = localStorage.getItem("sla_auth");
+        let demandas = []; let historico = []; let myCharts = { sla: null, sub: null };
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = () => { 
+            lucide.createIcons(); 
+            if (authKey) { 
+                document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('sidebar').classList.remove('hidden');
+                document.getElementById('sidebar').classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden');
+                loadFromD1(); 
+            } 
+        };
+
+        // --- LOGIN INTELIGENTE ---
+        async function tentarLogin() {
+            const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
+            if(!u || !p) return;
+            const key = "Basic " + btoa(`${u}:${p}`);
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key.replace("Basic ", "") } });
+            if (res.status === 200) { 
+                authKey = key.replace("Basic ", ""); localStorage.setItem("sla_auth", authKey); 
+                document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('sidebar').classList.remove('hidden');
+                document.getElementById('sidebar').classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden');
+                loadFromD1(); 
+            } else { 
+                document.getElementById('login-erro').classList.remove('hidden'); 
+            }
+        }
+
+        function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
+        
+        // --- MODAIS ---
+        function openUserModal() { document.getElementById('userModal').classList.remove('hidden'); }
+        function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
+        
+        async function cadastrarUsuario() {
+            const u = document.getElementById('new-user').value; const p = document.getElementById('new-pass').value;
+            await fetch(`${API_URL}/save_user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ username: u, password: p }) });
+            alert("Autorizado!"); closeUserModal();
+        }
+
+        // --- DADOS ---
+        async function loadFromD1() {
+            try {
+                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+                if(res.status === 401) { logout(); return; }
+                const data = await res.json();
+                demandas = data.filter(d => !d.status_final);
+                historico = data.filter(d => d.status_final);
+                render();
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveToD1(item) {
+            await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
+        }
+
+        // --- UPLOAD ---
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const hoje = new Date().setHours(0,0,0,0);
+                await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
+                const bulk = rows.map(n => ({
+                    sla_inicial: parseInt(n.SLA || n.sla || 0), data_referencia: hoje, reqc: String(n.ReqC || n.reqc || ''), 
+                    item: String(n.Item || n.item || '1'), nome: n['Nome do Requisitante'] || '', ws: n.WS || '', 
+                    subtipo: n.Subtipo || '', texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, 
+                    vtotal: n['Valor Total RC'] || 0, observacao: n.Observações || ''
+                })).filter(d => d.reqc);
+                await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                loadFromD1();
+            };
+            reader.readAsBinaryString(e.target.files[0]);
+        });
+
+        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Descrição'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
+
+        function render() {
+            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const corpo = document.getElementById('tabela-corpo');
+            const histBody = document.getElementById('tabela-historico');
+            
+            // Cabeçalho Principal (Estilizado)
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="px-6 py-4">${c.label}</th>`).join('') + '<th class="px-6 py-4 text-center">AÇÕES</th>';
+            
+            // Cabeçalho Histórico
+            document.getElementById('header-historico').innerHTML = `<th class="px-4 py-3">STATUS</th>` + colunas.map(c => `<th class="px-4 py-3">${c.label}</th>`).join('') + '<th class="px-4 py-3 text-center">RESTAURAR</th>';
+            
+            corpo.innerHTML = ""; histBody.innerHTML = "";
+            let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
+
+            demandas.forEach((d, idx) => {
+                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
+                const sla = calcularSlaAtual(d);
+                
+                // Badges de SLA
+                let badgeClass = "bg-blue-100 text-blue-700";
+                if (sla > 90) { badgeClass = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (sla > 60) { badgeClass = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (sla > 30) { badgeClass = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (sla > 15) { badgeClass = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+                else { counts.c15++; }
+
+                corpo.innerHTML += `
+                <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
+                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${sla} dias</span></td>
+                    <td class="px-6 py-4 font-bold text-gray-700">${d.reqc}</td>
+                    <td class="px-6 py-4">${d.item}</td>
+                    <td class="px-6 py-4 text-gray-500">${d.nome}</td>
+                    <td class="px-6 py-4 text-gray-500">${d.ws}</td>
+                    <td class="px-6 py-4"><span class="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">${d.subtipo}</span></td>
+                    <td class="px-6 py-4 col-texto-breve text-gray-400 text-xs" title="${d.texto}">${d.texto}</td>
+                    <td class="px-6 py-4">${fmtMoeda(d.vunit)}</td>
+                    <td class="px-6 py-4 font-bold text-gray-700">${fmtMoeda(d.vtotal)}</td>
+                    <td class="px-6 py-4 text-gray-400 italic text-xs max-w-[150px] truncate">${d.observacao || '-'}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100" title="Concluir"><i data-lucide="check" class="w-4 h-4"></i></button>
+                            <button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" title="Cancelar"><i data-lucide="x" class="w-4 h-4"></i></button>
+                            <button onclick="openEdit(${demandas.indexOf(d)})" class="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100" title="Editar"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            // Renderiza Histórico
+            historico.forEach((h, idx) => {
+                histBody.innerHTML += `
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                    <td class="px-4 py-3"><span class="text-xs font-bold px-2 py-1 rounded ${h.status_final==='Concluído'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${h.status_final}</span></td>
+                    <td class="px-4 py-3 text-gray-500">${h.sla_no_fim}d</td>
+                    <td class="px-4 py-3 font-bold">${h.reqc}</td>
+                    <td class="px-4 py-3">${h.item}</td>
+                    <td class="px-4 py-3">${h.nome}</td>
+                    <td class="px-4 py-3">${h.ws}</td>
+                    <td class="px-4 py-3">${h.subtipo}</td>
+                    <td class="px-4 py-3 text-xs truncate max-w-[100px]">${h.texto}</td>
+                    <td class="px-4 py-3">${fmtMoeda(h.vunit)}</td>
+                    <td class="px-4 py-3 font-bold">${fmtMoeda(h.vtotal)}</td>
+                    <td class="px-4 py-3 text-xs italic text-gray-400">${h.observacao || ''}</td>
+                    <td class="px-4 py-3 text-center"><button onclick="reativar(${idx})" class="text-indigo-600 font-bold hover:underline text-xs">REATIVAR</button></td>
+                </tr>`;
+            });
+
+            // Atualiza Cards do Topo
+            document.getElementById('count-15').innerText = counts.c15; 
+            document.getElementById('count-30').innerText = counts.c30; 
+            document.getElementById('count-60').innerText = counts.c60; 
+            document.getElementById('count-90').innerText = counts.c90; 
+            document.getElementById('count-91').innerText = counts.c91;
+            
+            lucide.createIcons();
+            updateCharts(counts, demandas); // Atualiza gráficos na tela principal
+        }
+
+        // --- GRÁFICOS INTEGRADOS ---
+        function updateCharts(counts, data) {
+            // Prepara dados subtipo
+            const subMap = {};
+            data.forEach(d => { const s = d.subtipo || "Não Informado"; subMap[s] = (subMap[s] || 0) + 1; });
+
+            // Gráfico Barras (SLA)
+            const ctxSla = document.getElementById('chartSla');
+            if(myCharts.sla) myCharts.sla.destroy();
+            myCharts.sla = new Chart(ctxSla, {
+                type: 'bar',
+                data: {
+                    labels: ['0-15', '16-30', '31-60', '61-90', '91+'],
+                    datasets: [{
+                        label: 'Demandas',
+                        data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91],
+                        backgroundColor: ['#3b82f6', '#eab308', '#f97316', '#ef4444', '#9333ea'],
+                        borderRadius: 6,
+                        barThickness: 30
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4] } }, x: { grid: { display: false } } }
+                }
+            });
+
+            // Gráfico Rosquinha (Subtipos)
+            const ctxSub = document.getElementById('chartSubtipo');
+            if(myCharts.sub) myCharts.sub.destroy();
+            myCharts.sub = new Chart(ctxSub, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(subMap),
+                    datasets: [{
+                        data: Object.values(subMap),
+                        backgroundColor: ['#1e293b', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } } }
+                }
+            });
+        }
+
+        // --- PDF ---
+        async function gerarPDF() {
+            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
+            pdf.setFontSize(18); pdf.text("Relatório Executivo de SLA", 15, 15);
+            pdf.setFontSize(10); pdf.text("Gerado em: " + new Date().toLocaleDateString(), 15, 22);
+            
+            // Pega imagem dos gráficos
+            const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0);
+            const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
+            
+            pdf.addImage(imgSla, 'PNG', 15, 30, 130, 60); 
+            pdf.addImage(imgSub, 'PNG', 160, 30, 120, 60);
+            
+            pdf.autoTable({ 
+                startY: 100, 
+                head: [colunas.map(c => c.label)], 
+                body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), 
+                theme: 'striped',
+                headStyles: { fillColor: [30, 41, 59] },
+                styles: { fontSize: 7 } 
+            });
+            pdf.save("Dashboard_SLA.pdf");
+        }
+
+        // --- AUXILIARES ---
+        function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
+        function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
+        function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+        function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
+        async function setStatus(idx, s) { if(!confirm(`Confirmar status: ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
+        async function reativar(idx) { if(!confirm("Reativar esta demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
+
+        // --- FORMULARIO SALVAR ---
+        document.getElementById('demandaForm').onsubmit = async (e) => {
+            e.preventDefault(); const idx = document.getElementById('editIndex').value;
+            const data = { 
+                sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, 
+                item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, 
+                texto: document.getElementById('f-texto').value, 
+                vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), 
+                observacao: document.getElementById('f-obs').value 
+            };
+            await saveToD1(data); closeModal(); loadFromD1();
+        };
+
+        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('modalTitle').innerText = "Adicionar Demanda"; document.getElementById('formModal').classList.remove('hidden'); }
+        function openEdit(idx) { 
+            const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('modalTitle').innerText = "Editar Demanda";
+            document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true;
+            document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || '';
+            document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || '';
+            document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal);
+            document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); 
+        }
+        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
+        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
+        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+        
+        // Funções para manter compatibilidade com botões antigos que chamei no código novo
+        function openCharts() { 
+            // Agora os gráficos já estão na tela, mas podemos dar um scroll até eles ou abrir modal se preferir
+             document.getElementById('chartModal').classList.remove('hidden'); // Abre modal fullscreen opcional
+        } 
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
