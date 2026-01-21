@@ -57,13 +57,13 @@
                     <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
                 </div>
                 <div class="flex gap-2 text-[10px]">
-                    <button onclick="exportarExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-2 rounded font-bold flex items-center gap-2"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> EXCEL</button>
-                    <button onclick="exportarPDFTabela()" class="bg-red-800 hover:bg-red-700 px-3 py-2 rounded font-bold flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
+                    <button onclick="exportarExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> EXCEL</button>
+                    <button onclick="exportarPDFTabela()" class="bg-red-800 hover:bg-red-700 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
                     <div class="w-[1px] bg-slate-700 mx-1"></div>
-                    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded font-bold flex items-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> NOVO</button>
-                    <button onclick="openCharts()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded font-bold flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4"></i></button>
-                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded font-bold flex items-center gap-2"><i data-lucide="archive" class="w-4 h-4"></i></button>
-                    <button onclick="logout()" class="bg-red-900/50 hover:bg-red-600 px-3 py-2 rounded"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="plus-circle" class="w-4 h-4"></i> NOVO</button>
+                    <button onclick="openCharts()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="pie-chart" class="w-4 h-4"></i></button>
+                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="archive" class="w-4 h-4"></i></button>
+                    <button onclick="logout()" class="bg-red-900/50 hover:bg-red-600 px-3 py-2 rounded transition-all shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </nav>
@@ -81,6 +81,7 @@
                 <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
                 <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
                 <p class="font-bold text-gray-600 text-sm">Sincronizar Planilha Master</p>
+                <p class="text-[9px] text-gray-400 uppercase font-bold mt-1 tracking-wider italic">Itens ausentes na planilha serão movidos para o histórico. Dados preenchidos manualmente são preservados.</p>
             </div>
 
             <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
@@ -135,7 +136,7 @@
 
     <div id="archiveModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 z-50">
         <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center mb-4 text-blue-900 font-bold uppercase italic"><h2>Histórico</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
+            <div class="flex justify-between items-center mb-4 text-blue-900 font-bold uppercase italic"><h2>Histórico (Limpeza automática 15 dias)</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
             <div class="overflow-x-auto border rounded flex-grow bg-gray-50"><table class="w-full text-left border-collapse"><thead class="bg-slate-200 uppercase font-bold sticky top-0 text-[10px]"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y text-[9px] italic"></tbody></table></div>
         </div>
     </div>
@@ -187,7 +188,9 @@
                 for (let item of itensParaDeletar) {
                     await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ id: item.id }) });
                 }
-                loadFromD1();
+                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+                const data = await res.json();
+                historico = data.filter(d => d.status_final);
             }
         }
 
@@ -195,74 +198,17 @@
             await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
-        // --- EXPORTAÇÃO XLSX ---
-        function exportarExcel() {
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
-            const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
-            
-            const wsData = dadosFiltrados.map(d => ({
-                "SLA": calcularSlaAtual(d) + "d",
-                "ReqC": d.reqc,
-                "Item": d.item,
-                "Requisitante": d.nome,
-                "WS": d.ws,
-                "Subtipo": d.subtipo,
-                "Texto": d.texto,
-                "V. Unit": d.vunit,
-                "V. Total": d.vtotal,
-                "Obs": d.observacao
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(wsData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Demandas");
-            XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
-        }
-
-        // --- EXPORTAÇÃO PDF DA TABELA ---
-        function exportarPDFTabela() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('l', 'mm', 'a4');
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
-            const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
-
-            pdf.setFontSize(16);
-            pdf.text("PAINEL DE DEMANDAS - SLA MESTRE", 15, 15);
-            pdf.setFontSize(10);
-            pdf.text(`Gerado em: ${new Date().toLocaleString()}`, 15, 22);
-
-            const headers = [["SLA", "ReqC", "Item", "Requisitante", "Subtipo", "V. Total", "Obs"]];
-            const body = dadosFiltrados.map(d => [
-                calcularSlaAtual(d) + "d",
-                d.reqc,
-                d.item,
-                d.nome,
-                d.subtipo,
-                fmtMoeda(d.vtotal),
-                d.observacao || ""
-            ]);
-
-            pdf.autoTable({
-                startY: 30,
-                head: headers,
-                body: body,
-                theme: 'grid',
-                styles: { fontSize: 7, cellPadding: 2 },
-                headStyles: { fillColor: [15, 23, 42] }
-            });
-
-            pdf.save(`SLA_Painel_${new Date().toLocaleDateString()}.pdf`);
-        }
-
-        // --- IMPORTAÇÃO ---
+        // --- IMPORTAÇÃO COM AVISOS E QUANTIDADES ---
         document.getElementById('fileInput').addEventListener('change', (e) => {
             const reader = new FileReader();
             reader.onload = async (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const hoje = new Date().setHours(0,0,0,0);
+                
                 const mapaAtual = {};
                 demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
+
                 const reqcsNaPlanilha = new Set();
                 const bulk = rows.map(n => {
                     const r = String(n.ReqC || n.reqc || '').trim();
@@ -297,11 +243,38 @@
                 if (bulk.length > 0) {
                     await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
                 }
-                alert("Sincronização concluída!");
+                
+                alert(`SINCRONIZAÇÃO COMPLETA!\n\n- ${bulk.length} Itens sincronizados/atualizados.\n- ${paraHistorico.length} Itens movidos para o histórico por ausência na planilha.`);
                 loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
         });
+
+        // --- EXPORTAÇÃO XLSX ---
+        function exportarExcel() {
+            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
+            const wsData = dadosFiltrados.map(d => ({
+                "SLA": calcularSlaAtual(d) + "d", "ReqC": d.reqc, "Item": d.item, "Requisitante": d.nome, "WS": d.ws, "Subtipo": d.subtipo, "Texto": d.texto, "V. Unit": d.vunit, "V. Total": d.vtotal, "Obs": d.observacao
+            }));
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DemandasAtivas");
+            XLSX.writeFile(wb, `SLA_Geral_${new Date().toLocaleDateString()}.xlsx`);
+        }
+
+        // --- EXPORTAÇÃO PDF ---
+        function exportarPDFTabela() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
+            pdf.setFontSize(14); pdf.text("RELATORIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 15);
+            const headers = [["SLA", "ReqC", "Item", "Requisitante", "Subtipo", "V. Total", "Observações"]];
+            const body = dadosFiltrados.map(d => [calcularSlaAtual(d) + "d", d.reqc, d.item, d.nome, d.subtipo, fmtMoeda(d.vtotal), d.observacao || ""]);
+            pdf.autoTable({ startY: 25, head: headers, body: body, theme: 'grid', styles: { fontSize: 7 }, headStyles: { fillColor: [15, 23, 42] } });
+            pdf.save(`SLA_Relatorio_${new Date().toLocaleDateString()}.pdf`);
+        }
 
         const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
 
@@ -311,7 +284,6 @@
             const histBody = document.getElementById('tabela-historico');
             document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">Gestão</th>';
             document.getElementById('header-historico').innerHTML = `<th class="p-3 text-blue-600">STATUS</th>` + colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">AÇÃO</th>';
-            
             corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
@@ -324,14 +296,11 @@
                 else if (sla > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
                 else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else counts.c15++;
-
                 corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${sla}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${idx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
             });
-
             historico.forEach((h, idx) => {
                 histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-3 font-black ${h.status_final.includes('Concluído')?'text-emerald-600':'text-red-500'} italic uppercase">${h.status_final}</td><td class="p-3 font-bold">${h.sla_no_fim}d</td><td class="p-3 font-bold">${h.reqc}</td><td class="p-3">${h.item}</td><td class="p-3">${h.nome}</td><td class="p-3">${h.ws}</td><td class="p-3 text-blue-500 font-bold">${h.subtipo}</td><td class="p-3 col-texto-breve text-[8px]">${h.texto}</td><td class="p-3">${fmtMoeda(h.vunit)}</td><td class="p-3 font-bold text-slate-800">${fmtMoeda(h.vtotal)}</td><td class="p-3 italic text-slate-400">${h.observacao || ''}</td><td class="p-3 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black uppercase underline">Reativar</button></td></tr>`;
             });
-
             document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
             lucide.createIcons();
         }
