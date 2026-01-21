@@ -92,6 +92,67 @@
         </main>
     </div>
 
+    <div id="chartModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-6xl w-full p-6 h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6 border-b pb-2">
+                <h2 class="text-lg font-bold uppercase italic text-slate-800">Analytics Dashboard</h2>
+                <div class="flex gap-2">
+                    <button onclick="gerarPDF()" class="bg-blue-600 text-white px-4 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2"><i data-lucide="download" class="w-3 h-3"></i> Exportar PDF</button>
+                    <button onclick="closeCharts()" class="text-2xl">&times;</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto p-4 flex-grow">
+                <div class="bg-gray-50 p-4 border rounded shadow-inner flex flex-col items-center">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Aging SLA</h3>
+                    <div class="chart-box"><canvas id="chartSla"></canvas></div>
+                </div>
+                <div class="bg-gray-50 p-4 border rounded shadow-inner flex flex-col items-center">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Subtipos</h3>
+                    <div class="chart-box"><canvas id="chartSubtipo"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="formModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h2 id="modalTitle" class="text-lg font-bold mb-6 border-b pb-2 uppercase italic text-blue-900">Manutenção</h2>
+            <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="hidden" id="editIndex">
+                <div><label class="font-bold text-gray-400 italic">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Nome Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded text-blue-600 font-bold"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Texto Breve</label><input type="text" id="f-texto" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-4"><label class="font-bold text-blue-600 italic underline">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-blue-50 p-2 rounded italic outline-none"></textarea></div>
+                <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4"><button type="button" onclick="closeModal()" class="px-4 text-gray-400 font-bold uppercase">Cancelar</button><button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="archiveModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 z-50">
+        <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-4 text-blue-900 font-bold uppercase italic"><h2>Histórico</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
+            <div class="overflow-x-auto border rounded flex-grow bg-gray-50"><table class="w-full text-left border-collapse"><thead class="bg-slate-200 uppercase font-bold sticky top-0 text-[10px]"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y text-[9px] italic"></tbody></table></div>
+        </div>
+    </div>
+
+    <div id="userModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[110]">
+        <div class="bg-white rounded-lg p-8 w-full max-w-sm text-center shadow-2xl">
+            <h2 class="font-bold uppercase mb-6 italic text-slate-800">Novo Acesso</h2>
+            <div class="space-y-4">
+                <input type="text" id="new-user" placeholder="Login" class="w-full border p-3 rounded-lg outline-none">
+                <input type="password" id="new-pass" placeholder="Senha" class="w-full border p-3 rounded-lg outline-none">
+                <button onclick="cadastrarUsuario()" class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold uppercase text-[10px]">Cadastrar</button>
+                <button onclick="closeUserModal()" class="text-gray-400 text-[10px] mt-4 uppercase font-bold">Voltar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
         let authKey = localStorage.getItem("sla_auth");
@@ -119,6 +180,14 @@
         }
 
         function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
+        function openUserModal() { document.getElementById('userModal').classList.remove('hidden'); }
+        function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
+
+        async function cadastrarUsuario() {
+            const u = document.getElementById('new-user').value; const p = document.getElementById('new-pass').value;
+            await fetch(`${API_URL}/save_user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ username: u, password: p }) });
+            alert("Autorizado!"); closeUserModal();
+        }
 
         async function loadFromD1() {
             try {
@@ -135,7 +204,7 @@
             await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
-        // --- IMPORTAÇÃO COM PRESERVAÇÃO DE DADOS MANUAIS ---
+        // --- IMPORTAÇÃO COM PRESERVAÇÃO ---
         document.getElementById('fileInput').addEventListener('change', (e) => {
             const reader = new FileReader();
             reader.onload = async (evt) => {
@@ -143,41 +212,127 @@
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const hoje = new Date().setHours(0,0,0,0);
 
-                // Criar um mapa das demandas atuais para não perder o que foi editado
                 const mapaAtual = {};
                 demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
 
                 const bulk = rows.map(n => {
-                    const reqcImportada = String(n.ReqC || n.reqc || '').trim();
-                    const existente = mapaAtual[reqcImportada];
-
+                    const r = String(n.ReqC || n.reqc || '').trim();
+                    const ex = mapaAtual[r];
                     return {
                         sla_inicial: parseInt(n.SLA || n.sla || 0),
-                        data_referencia: existente ? existente.data_referencia : hoje,
-                        reqc: reqcImportada,
+                        data_referencia: ex ? ex.data_referencia : hoje,
+                        reqc: r,
                         item: String(n.Item || n.item || '1'),
-                        // SE EXISTE NO BANCO, MANTÉM O NOME QUE ESTÁ LÁ (PREENCHIDO MANUALMENTE)
-                        nome: existente ? (existente.nome || n['Nome do Requisitante'] || '') : (n['Nome do Requisitante'] || ''),
-                        ws: existente ? (existente.ws || n.WS || '') : (n.WS || ''),
-                        subtipo: existente ? (existente.subtipo || n.Subtipo || '') : (n.Subtipo || ''),
-                        texto: existente ? (existente.texto || n['Texto Breve'] || '') : (n['Texto Breve'] || ''),
+                        nome: ex && ex.nome ? ex.nome : (n['Nome do Requisitante'] || ''),
+                        ws: ex && ex.ws ? ex.ws : (n.WS || ''),
+                        subtipo: ex && ex.subtipo ? ex.subtipo : (n.Subtipo || ''),
+                        texto: ex && ex.texto ? ex.texto : (n['Texto Breve'] || ''),
                         vunit: n['Valor Unitario'] || 0,
                         vtotal: n['Valor Total RC'] || 0,
-                        observacao: existente ? (existente.observacao || n.Observações || '') : (n.Observações || '')
+                        observacao: ex && ex.observacao ? ex.observacao : (n.Observações || '')
                     };
                 }).filter(d => d.reqc);
 
-                if(bulk.length > 0) {
-                    await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
-                    await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
-                    loadFromD1();
-                }
+                await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
+                await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
         });
 
-        // [O restante das funções: render, gerarPDF, openCharts, etc, permanecem as mesmas do seu código]
-        // ... (Mantenha o restante do seu Script original aqui)
+        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
+
+        function render() {
+            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const corpo = document.getElementById('tabela-corpo');
+            const histBody = document.getElementById('tabela-historico');
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">Gestão</th>';
+            document.getElementById('header-historico').innerHTML = `<th class="p-3 text-blue-600">STATUS</th>` + colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">AÇÃO</th>';
+            
+            corpo.innerHTML = ""; histBody.innerHTML = "";
+            let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
+
+            demandas.forEach((d, idx) => {
+                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
+                const sla = calcularSlaAtual(d);
+                let cor = "bg-blue-100 text-blue-700";
+                if (sla > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (sla > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (sla > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+                else counts.c15++;
+
+                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${sla}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${idx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
+            });
+
+            historico.forEach((h, idx) => {
+                histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-3 font-black ${h.status_final==='Concluído'?'text-emerald-600':'text-red-500'} italic uppercase">${h.status_final}</td><td class="p-3 font-bold">${h.sla_no_fim}d</td><td class="p-3 font-bold">${h.reqc}</td><td class="p-3">${h.item}</td><td class="p-3">${h.nome}</td><td class="p-3">${h.ws}</td><td class="p-3 text-blue-500 font-bold">${h.subtipo}</td><td class="p-3 col-texto-breve text-[8px]">${h.texto}</td><td class="p-3">${fmtMoeda(h.vunit)}</td><td class="p-3 font-bold text-slate-800">${fmtMoeda(h.vtotal)}</td><td class="p-3 italic text-slate-400">${h.observacao || ''}</td><td class="p-3 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black uppercase underline">Reativar</button></td></tr>`;
+            });
+
+            document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
+            lucide.createIcons();
+        }
+
+        function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
+        function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
+        function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+        function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
+        async function setStatus(idx, s) { if(!confirm(`Marcar como ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
+        async function reativar(idx) { if(!confirm("Reativar demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
+
+        document.getElementById('demandaForm').onsubmit = async (e) => {
+            e.preventDefault(); const idx = document.getElementById('editIndex').value;
+            const data = { 
+                sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, 
+                item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, 
+                texto: document.getElementById('f-texto').value, 
+                vunit: parseNum(document.getElementById('f-vunit').value), 
+                vtotal: parseNum(document.getElementById('f-vtotal').value), 
+                observacao: document.getElementById('f-obs').value 
+            };
+            await saveToD1(data); closeModal(); loadFromD1();
+        };
+
+        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('modalTitle').innerText = "Adicionar Demanda Manual"; document.getElementById('formModal').classList.remove('hidden'); }
+        function openEdit(idx) { 
+            const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('modalTitle').innerText = "Editar Registro";
+            document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true;
+            document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || '';
+            document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || '';
+            document.getElementById('f-vunit').value = fmtMoeda(d.vunit); 
+            document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal);
+            document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); 
+        }
+        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
+        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
+        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+        
+        async function gerarPDF() {
+            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
+            pdf.setFontSize(20); pdf.text("RELATORIO ESTRATEGICO SLA MESTRE", 15, 15);
+            const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0);
+            const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
+            pdf.addImage(imgSla, 'PNG', 15, 35, 130, 65); pdf.addImage(imgSub, 'PNG', 160, 35, 110, 65);
+            pdf.autoTable({ startY: 105, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'grid', styles: { fontSize: 6 } });
+            pdf.save("SLA_Report.pdf");
+        }
+
+        function openCharts() {
+            document.getElementById('chartModal').classList.remove('hidden');
+            const counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; const subMap = {};
+            demandas.forEach(d => {
+                const sla = calcularSlaAtual(d);
+                if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
+                const s = d.subtipo || "Não Info"; subMap[s] = (subMap[s] || 0) + 1;
+            });
+            setTimeout(() => {
+                if(myCharts.sla) myCharts.sla.destroy();
+                myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15','16-30','31-60','61-90','91+'], datasets: [{ label: 'Qtd', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+                if(myCharts.sub) myCharts.sub.destroy();
+                myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
+            }, 300);
+        }
     </script>
 </body>
 </html>
