@@ -78,7 +78,8 @@
             <div class="bg-white p-4 rounded border-2 border-dashed border-gray-300 mb-6 text-center hover:border-blue-500 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
                 <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
                 <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
-                <p class="font-bold text-gray-600 text-sm">Sincronizar Planilha Master (Merge Seguro)</p>
+                <p class="font-bold text-gray-600 text-sm">Sincronizar Planilha Master</p>
+                <p class="text-[9px] text-gray-400 uppercase">Itens ausentes na planilha serão movidos para o histórico</p>
             </div>
 
             <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
@@ -158,7 +159,6 @@
         let authKey = localStorage.getItem("sla_auth");
         let demandas = []; let historico = []; let myCharts = { sla: null, sub: null };
 
-        // --- INICIALIZAÇÃO ---
         window.onload = () => { 
             lucide.createIcons(); 
             if (authKey) { 
@@ -168,7 +168,6 @@
             } 
         };
 
-        // --- LOGIN ---
         async function tentarLogin() {
             const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             if(!u || !p) return;
@@ -191,11 +190,9 @@
             alert("Autorizado!"); closeUserModal();
         }
 
-        // --- CARREGAMENTO ---
         async function loadFromD1() {
             try {
                 const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
-                if(res.status === 401) { logout(); return; }
                 const data = await res.json();
                 demandas = data.filter(d => !d.status_final);
                 historico = data.filter(d => d.status_final);
@@ -207,8 +204,7 @@
             await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
-        // --- IMPORTAÇÃO 100% SEGURA (UPSERT) ---
-        // ESTA FUNÇÃO NUNCA MAIS CHAMA 'clear_active'
+        // --- IMPORTAÇÃO COM REGRA DE HISTÓRICO AUTOMÁTICO ---
         document.getElementById('fileInput').addEventListener('change', (e) => {
             const reader = new FileReader();
             reader.onload = async (evt) => {
@@ -216,11 +212,16 @@
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const hoje = new Date().setHours(0,0,0,0);
 
+                // 1. Mapear o que está no sistema agora
                 const mapaAtual = {};
                 demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
 
+                // 2. Mapear o que veio na planilha
+                const reqcsNaPlanilha = new Set();
                 const bulk = rows.map(n => {
                     const r = String(n.ReqC || n.reqc || '').trim();
+                    if(!r) return null;
+                    reqcsNaPlanilha.add(r);
                     const ex = mapaAtual[r];
                     
                     return {
@@ -228,7 +229,6 @@
                         data_referencia: ex ? ex.data_referencia : hoje,
                         reqc: r,
                         item: String(n.Item || n.item || '1'),
-                        // SE JÁ EXISTE NO SISTEMA, PRESERVA O QUE BRUNO DIGITOU
                         nome: (ex && ex.nome) ? ex.nome : (n['Nome do Requisitante'] || ''),
                         ws: (ex && ex.ws) ? ex.ws : (n.WS || ''),
                         subtipo: (ex && ex.subtipo) ? ex.subtipo : (n.Subtipo || ''),
@@ -237,18 +237,37 @@
                         vtotal: n['Valor Total RC'] || 0,
                         observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || '')
                     };
-                }).filter(d => d.reqc);
+                }).filter(d => d !== null);
 
+                // 3. REGRA: Identificar o que sumiu da planilha para mover ao histórico
+                const paraHistorico = [];
+                demandas.forEach(d => {
+                    const r = String(d.reqc).trim();
+                    if (!reqcsNaPlanilha.has(r)) {
+                        let itemFim = { ...d };
+                        itemFim.status_final = "Concluído (Auto)";
+                        itemFim.sla_no_fim = calcularSlaAtual(d);
+                        paraHistorico.push(itemFim);
+                    }
+                });
+
+                // 4. Enviar atualizações para o banco
+                // Primeiro enviamos os que devem ir para o histórico
+                for (let item of paraHistorico) {
+                    await saveToD1(item);
+                }
+
+                // Depois enviamos o bloco da planilha (Bulk Upsert)
                 if (bulk.length > 0) {
-                    // APENAS SALVA E ATUALIZA (MERGE)
                     await fetch(`${API_URL}/save_bulk`, { 
                         method: 'POST', 
                         headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, 
                         body: JSON.stringify(bulk) 
                     });
-                    alert("Sincronização concluída! Dados mesclados com sucesso.");
-                    loadFromD1();
                 }
+
+                alert(`Sincronização concluída!\n- ${bulk.length} itens atualizados/mantidos.\n- ${paraHistorico.length} itens movidos para o histórico.`);
+                loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
         });
@@ -280,7 +299,7 @@
             });
 
             historico.forEach((h, idx) => {
-                histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-3 font-black ${h.status_final==='Concluído'?'text-emerald-600':'text-red-500'} italic uppercase">${h.status_final}</td><td class="p-3 font-bold">${h.sla_no_fim}d</td><td class="p-3 font-bold">${h.reqc}</td><td class="p-3">${h.item}</td><td class="p-3">${h.nome}</td><td class="p-3">${h.ws}</td><td class="p-3 text-blue-500 font-bold">${h.subtipo}</td><td class="p-3 col-texto-breve text-[8px]">${h.texto}</td><td class="p-3">${fmtMoeda(h.vunit)}</td><td class="p-3 font-bold text-slate-800">${fmtMoeda(h.vtotal)}</td><td class="p-3 italic text-slate-400">${h.observacao || ''}</td><td class="p-3 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black uppercase underline">Reativar</button></td></tr>`;
+                histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-3 font-black ${h.status_final.includes('Concluído')?'text-emerald-600':'text-red-500'} italic uppercase">${h.status_final}</td><td class="p-3 font-bold">${h.sla_no_fim}d</td><td class="p-3 font-bold">${h.reqc}</td><td class="p-3">${h.item}</td><td class="p-3">${h.nome}</td><td class="p-3">${h.ws}</td><td class="p-3 text-blue-500 font-bold">${h.subtipo}</td><td class="p-3 col-texto-breve text-[8px]">${h.texto}</td><td class="p-3">${fmtMoeda(h.vunit)}</td><td class="p-3 font-bold text-slate-800">${fmtMoeda(h.vtotal)}</td><td class="p-3 italic text-slate-400">${h.observacao || ''}</td><td class="p-3 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black uppercase underline">Reativar</button></td></tr>`;
             });
 
             document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
@@ -291,8 +310,26 @@
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
         function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
-        async function setStatus(idx, s) { if(!confirm(`Marcar como ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
-        async function reativar(idx) { if(!confirm("Reativar demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
+        
+        async function setStatus(idx, s) { 
+            if(!confirm(`Marcar como ${s}?`)) return; 
+            let item = demandas[idx]; 
+            item.status_final = s; 
+            item.sla_no_fim = calcularSlaAtual(item); 
+            await saveToD1(item); 
+            loadFromD1(); 
+        }
+
+        async function reativar(idx) { 
+            if(!confirm("Reativar demanda?")) return; 
+            let item = historico[idx]; 
+            item.data_referencia = new Date().setHours(0,0,0,0); 
+            item.sla_inicial = item.sla_no_fim; 
+            delete item.sla_no_fim; 
+            delete item.status_final; 
+            await saveToD1(item); 
+            loadFromD1(); 
+        }
 
         document.getElementById('demandaForm').onsubmit = async (e) => {
             e.preventDefault(); const idx = document.getElementById('editIndex').value;
