@@ -219,9 +219,14 @@
             await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
+        // --- LIMPEZA DE MOEDA ROBUSTA ---
         function limparMoedaImportacao(valor) {
-            if (typeof valor !== 'string') return valor || 0;
-            let limpo = valor.replace("R$", "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+            if (valor === undefined || valor === null) return 0;
+            let str = String(valor).replace("R$", "").replace(/\s/g, "");
+            // Se o valor já for um número puro (ex do Excel)
+            if (!isNaN(str) && str !== "") return parseFloat(str);
+            // Se tiver vírgula e ponto (formato PT-BR: 1.250,50)
+            let limpo = str.replace(/\./g, "").replace(",", ".");
             return parseFloat(limpo) || 0;
         }
 
@@ -234,6 +239,7 @@
                 const mapaAtual = {};
                 demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
                 const reqcsNaPlanilha = new Set();
+                
                 const bulk = rows.map(n => {
                     const r = String(n.ReqC || n.reqc || '').trim();
                     if(!r) return null;
@@ -247,7 +253,7 @@
                         ws: (ex && ex.ws) ? ex.ws : (n.WS || ''),
                         subtipo: (ex && ex.subtipo) ? ex.subtipo : (n.Subtipo || ''),
                         texto: (ex && ex.texto) ? ex.texto : (n['Texto Breve'] || ''),
-                        vunit: limparMoedaImportacao(n['Valor Unitario']),
+                        vunit: limparMoedaImportacao(n['Valor Unitario'] || n['Valor Unitário']),
                         vtotal: limparMoedaImportacao(n['Valor Total RC']),
                         observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || '')
                     };
@@ -266,7 +272,7 @@
 
                 let moverConfirmado = false;
                 if (paraHistorico.length > 0) {
-                    moverConfirmado = confirm(`Detectamos ${paraHistorico.length} itens ausentes na planilha.\n\nDeseja movê-los para o HISTÓRICO agora?`);
+                    moverConfirmado = confirm(`Detectamos ${paraHistorico.length} itens ausentes na planilha. Mover para o histórico?`);
                 }
                 if (moverConfirmado) {
                     for (let item of paraHistorico) { await saveToD1(item); }
@@ -367,10 +373,7 @@
 
         function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
-        
-        // ESTA FUNÇÃO GARANTE A MÁSCARA VISUAL R$
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
-        
         function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
         async function setStatus(idx, s) { if(!confirm(`Marcar como ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); item.data_referencia = new Date().setHours(0,0,0,0); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { if(!confirm("Reativar demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
@@ -389,8 +392,22 @@
         function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
 
         function exportarExcel() {
-            const corpoTabela = document.getElementById('tabela-corpo');
-            const ws = XLSX.utils.table_to_sheet(corpoTabela.closest('table'));
+            const buscaGeral = document.getElementById('inputBusca').value.toLowerCase();
+            let listaExcel = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
+            listaExcel = listaExcel.filter(d => {
+                const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+                const matchesColunas = colunas.every(col => {
+                    const val = (col.key === 'sla') ? String(d.slaCalculado) : String(d[col.key] || '');
+                    return !filtrosColuna[col.key] || val.toLowerCase().includes(filtrosColuna[col.key]);
+                });
+                return matchesGeral && matchesColunas;
+            });
+
+            const wsData = listaExcel.map(d => ({
+                "SLA": d.slaCalculado + "d", "ReqC": d.reqc, "Item": d.item, "Requisitante": d.nome, "WS": d.ws, "Subtipo": d.subtipo, "Texto": d.texto, "V. Unit": fmtMoeda(d.vunit), "V. Total": fmtMoeda(d.vtotal), "Obs": d.observacao
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(wsData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Demandas");
             XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
@@ -399,12 +416,23 @@
         function exportarPDFTabela() {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('l', 'mm', 'a4');
+            const buscaGeral = document.getElementById('inputBusca').value.toLowerCase();
+            let listaPdf = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
+            listaPdf = listaPdf.filter(d => {
+                const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+                const matchesColunas = colunas.every(col => {
+                    const val = (col.key === 'sla') ? String(d.slaCalculado) : String(d[col.key] || '');
+                    return !filtrosColuna[col.key] || val.toLowerCase().includes(filtrosColuna[col.key]);
+                });
+                return matchesGeral && matchesColunas;
+            });
+
             pdf.setFontSize(14);
             pdf.text("RELATÓRIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 12);
             const headers = [colunas.map(c => c.label)];
-            const body = Array.from(document.getElementById('tabela-corpo').rows).map(row => 
-                Array.from(row.cells).slice(0, 10).map(cell => cell.innerText)
-            );
+            const body = listaPdf.map(d => [
+                d.slaCalculado + "d", d.reqc, d.item, d.nome || "-", d.ws || "-", d.subtipo || "-", d.texto || "-", fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao || ""
+            ]);
             pdf.autoTable({ startY: 22, head: headers, body: body, theme: 'grid', styles: { fontSize: 5.5, overflow: 'linebreak' }, columnStyles: { 6: { cellWidth: 50 }, 9: { cellWidth: 40 } } });
             pdf.save(`SLA_Painel_${new Date().toLocaleDateString()}.pdf`);
         }
