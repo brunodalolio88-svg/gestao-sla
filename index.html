@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLA Mestre - Painel de Demandas</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; font-size: 11px; }
+        .col-texto-breve { white-space: normal !important; word-wrap: break-word; min-width: 200px; max-width: 300px; line-height: 1.4; }
+        th { cursor: pointer; transition: background-color 0.2s; position: relative; }
+        th:hover { background-color: #f1f5f9; }
+        #tela-login {
+            background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), 
+                        url('https://sla.kynto.com.br/sla.jpeg');
+            background-size: cover; background-position: center;
+        }
+        #painel-principal { display: none; }
+        .chart-box { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="tela-login" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 text-center">
+            <div class="mb-6">
+                <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <i data-lucide="shield-check" class="text-white w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-black text-white uppercase italic">Gestão SLA</h2>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/20 rounded-xl py-3 px-4 text-white outline-none border-none placeholder:text-white/50 focus:ring-2 focus:ring-blue-500 transition-all">
+                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/20 rounded-xl py-3 px-4 text-white outline-none border-none placeholder:text-white/50 focus:ring-2 focus:ring-blue-500 transition-all">
+                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl uppercase text-[10px] tracking-widest transition-all">Entrar</button>
+            </div>
+            <p id="login-erro" class="text-red-400 mt-4 text-[10px] hidden font-bold uppercase">Credenciais Inválidas</p>
+        </div>
+    </div>
+
+    <div id="painel-principal">
+        <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-md">
+            <div class="container mx-auto flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shield-check" class="text-blue-400"></i>
+                    <h1 class="font-bold text-base uppercase tracking-wider">Gestão de SLA Mestre</h1>
+                </div>
+                <div class="relative flex-grow max-w-md">
+                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Busca geral..." class="w-full pl-10 pr-4 py-2 rounded bg-slate-800 border border-slate-700 outline-none text-sm focus:ring-2 focus:ring-blue-500 text-white">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
+                </div>
+                <div class="flex gap-2 text-[10px]">
+                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Manual</button>
+                    <button onclick="openCharts()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="pie-chart" class="w-4 h-4"></i> Gráficos</button>
+                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="archive" class="w-4 h-4"></i> Histórico</button>
+                    <button onclick="openUserModal()" class="bg-slate-800 border border-slate-600 px-3 py-2 rounded font-bold transition-all"><i data-lucide="users" class="w-4 h-4"></i></button>
+                    <button onclick="logout()" class="bg-red-900/50 hover:bg-red-600 px-3 py-2 rounded transition-all"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container mx-auto p-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 text-center">
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">0-15 d</span><span id="count-15" class="text-2xl font-black text-blue-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><span class="font-bold text-gray-400 italic">16-30 d</span><span id="count-30" class="text-2xl font-black text-yellow-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-orange-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">31-60 d</span><span id="count-60" class="text-2xl font-black text-orange-500">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">61-90 d</span><span id="count-90" class="text-2xl font-black text-red-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><span class="font-bold text-gray-400 italic">91+ d</span><span id="count-91" class="text-2xl font-black text-purple-700">0</span></div>
+            </div>
+
+            <div class="bg-white p-4 rounded border-2 border-dashed border-gray-300 mb-6 text-center hover:border-blue-500 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+                <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
+                <p class="font-bold text-gray-600 text-sm">Sincronizar Planilha Master</p>
+            </div>
+
+            <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]"><tr id="header-principal"></tr></thead>
+                        <tbody id="tabela-corpo" class="divide-y divide-gray-100 bg-white font-medium italic"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
+        let authKey = localStorage.getItem("sla_auth");
+        let demandas = []; let historico = []; let myCharts = { sla: null, sub: null };
+
+        window.onload = () => { 
+            lucide.createIcons(); 
+            if (authKey) { 
+                document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('painel-principal').style.display = "block"; 
+                loadFromD1(); 
+            } 
+        };
+
+        async function tentarLogin() {
+            const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
+            if(!u || !p) return;
+            const key = "Basic " + btoa(`${u}:${p}`);
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key.replace("Basic ", "") } });
+            if (res.status === 200) { 
+                authKey = key.replace("Basic ", ""); localStorage.setItem("sla_auth", authKey); 
+                document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('painel-principal').style.display = "block"; loadFromD1(); 
+            } else { document.getElementById('login-erro').classList.remove('hidden'); }
+        }
+
+        function logout() { localStorage.removeItem("sla_auth"); window.location.reload(); }
+
+        async function loadFromD1() {
+            try {
+                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+                if(res.status === 401) { logout(); return; }
+                const data = await res.json();
+                demandas = data.filter(d => !d.status_final);
+                historico = data.filter(d => d.status_final);
+                render();
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveToD1(item) {
+            await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
+        }
+
+        // --- IMPORTAÇÃO COM PRESERVAÇÃO DE DADOS MANUAIS ---
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const hoje = new Date().setHours(0,0,0,0);
+
+                // Criar um mapa das demandas atuais para não perder o que foi editado
+                const mapaAtual = {};
+                demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
+
+                const bulk = rows.map(n => {
+                    const reqcImportada = String(n.ReqC || n.reqc || '').trim();
+                    const existente = mapaAtual[reqcImportada];
+
+                    return {
+                        sla_inicial: parseInt(n.SLA || n.sla || 0),
+                        data_referencia: existente ? existente.data_referencia : hoje,
+                        reqc: reqcImportada,
+                        item: String(n.Item || n.item || '1'),
+                        // SE EXISTE NO BANCO, MANTÉM O NOME QUE ESTÁ LÁ (PREENCHIDO MANUALMENTE)
+                        nome: existente ? (existente.nome || n['Nome do Requisitante'] || '') : (n['Nome do Requisitante'] || ''),
+                        ws: existente ? (existente.ws || n.WS || '') : (n.WS || ''),
+                        subtipo: existente ? (existente.subtipo || n.Subtipo || '') : (n.Subtipo || ''),
+                        texto: existente ? (existente.texto || n['Texto Breve'] || '') : (n['Texto Breve'] || ''),
+                        vunit: n['Valor Unitario'] || 0,
+                        vtotal: n['Valor Total RC'] || 0,
+                        observacao: existente ? (existente.observacao || n.Observações || '') : (n.Observações || '')
+                    };
+                }).filter(d => d.reqc);
+
+                if(bulk.length > 0) {
+                    await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
+                    await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                    loadFromD1();
+                }
+            };
+            reader.readAsBinaryString(e.target.files[0]);
+        });
+
+        // [O restante das funções: render, gerarPDF, openCharts, etc, permanecem as mesmas do seu código]
+        // ... (Mantenha o restante do seu Script original aqui)
+    </script>
+</body>
+</html>
