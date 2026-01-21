@@ -167,7 +167,7 @@
         let authKey = localStorage.getItem("sla_auth");
         let demandas = []; let historico = []; myCharts = { sla: null, sub: null };
         let filtrosColuna = {};
-        let ordenacao = { coluna: null, direcao: 1 }; // 1: ASC, -1: DESC
+        let ordenacao = { coluna: null, direcao: 1 };
 
         window.onload = () => { 
             lucide.createIcons(); 
@@ -285,7 +285,6 @@
             render();
         }
 
-        // --- NOVA FUNÇÃO DE ORDENAÇÃO ---
         function alterarOrdem(col) {
             if (ordenacao.coluna === col) {
                 ordenacao.direcao *= -1;
@@ -324,10 +323,8 @@
             corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
-            // Criar cópia para filtrar e ordenar
             let listaRender = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
 
-            // Filtro Geral + Colunas
             listaRender = listaRender.filter(d => {
                 const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
                 const matchesColunas = colunas.every(col => {
@@ -337,14 +334,11 @@
                 return matchesGeral && matchesColunas;
             });
 
-            // Ordenação
             if (ordenacao.coluna) {
                 listaRender.sort((a, b) => {
                     let vA = (ordenacao.coluna === 'sla') ? a.slaCalculado : (a[ordenacao.coluna] || '');
                     let vB = (ordenacao.coluna === 'sla') ? b.slaCalculado : (b[ordenacao.coluna] || '');
-                    
                     if (!isNaN(vA) && !isNaN(vB)) { vA = Number(vA); vB = Number(vB); }
-                    
                     if (vA < vB) return -1 * ordenacao.direcao;
                     if (vA > vB) return 1 * ordenacao.direcao;
                     return 0;
@@ -359,7 +353,6 @@
                 else if (d.slaCalculado > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else counts.c15++;
 
-                // Encontrar o index original na array 'demandas' para as funções de botão
                 const originalIdx = demandas.findIndex(orig => orig.reqc === d.reqc && orig.item === d.item);
 
                 corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${d.slaCalculado}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${originalIdx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${originalIdx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${originalIdx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
@@ -374,7 +367,10 @@
 
         function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
+        
+        // ESTA FUNÇÃO GARANTE A MÁSCARA VISUAL R$
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+        
         function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
         async function setStatus(idx, s) { if(!confirm(`Marcar como ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); item.data_referencia = new Date().setHours(0,0,0,0); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { if(!confirm("Reativar demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
@@ -397,7 +393,7 @@
             const ws = XLSX.utils.table_to_sheet(corpoTabela.closest('table'));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Demandas");
-            XLSX.writeFile(wb, `SLA_Painel_${new Date().toLocaleDateString()}.xlsx`);
+            XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
         }
 
         function exportarPDFTabela() {
