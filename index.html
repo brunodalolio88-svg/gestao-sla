@@ -14,8 +14,16 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; font-size: 11px; }
-        .col-texto-breve { white-space: normal !important; word-wrap: break-word; min-width: 200px; max-width: 300px; line-height: 1.4; }
-        th { cursor: pointer; transition: background-color 0.2s; position: relative; }
+        /* AJUSTE TELA: Quebra de linha total */
+        .col-texto-breve { 
+            white-space: normal !important; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+            min-width: 150px; 
+            max-width: 300px; 
+            line-height: 1.4; 
+        }
+        th { cursor: pointer; transition: background-color 0.2s; position: relative; vertical-align: top; }
         th:hover { background-color: #f1f5f9; }
         #tela-login {
             background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), 
@@ -24,6 +32,18 @@
         }
         #painel-principal { display: none; }
         .chart-box { position: relative; height: 300px; width: 100%; }
+        .filter-input {
+            width: 100%;
+            margin-top: 4px;
+            padding: 2px 4px;
+            font-weight: normal;
+            font-size: 9px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            color: #475569;
+            outline: none;
+        }
+        .filter-input:focus { border-color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -86,7 +106,9 @@
             <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]"><tr id="header-principal"></tr></thead>
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]">
+                            <tr id="header-principal"></tr>
+                        </thead>
                         <tbody id="tabela-corpo" class="divide-y divide-gray-100 bg-white font-medium italic"></tbody>
                     </table>
                 </div>
@@ -143,7 +165,8 @@
     <script>
         const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
         let authKey = localStorage.getItem("sla_auth");
-        let demandas = []; let historico = []; let myCharts = { sla: null, sub: null };
+        let demandas = []; let historico = []; myCharts = { sla: null, sub: null };
+        let filtrosColuna = {};
 
         window.onload = () => { 
             lucide.createIcons(); 
@@ -210,13 +233,11 @@
                 const mapaAtual = {};
                 demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
                 const reqcsNaPlanilha = new Set();
-
                 const bulk = rows.map(n => {
                     const r = String(n.ReqC || n.reqc || '').trim();
                     if(!r) return null;
                     reqcsNaPlanilha.add(r);
                     const ex = mapaAtual[r];
-
                     return {
                         sla_inicial: parseInt(n.SLA || n.sla || 0),
                         data_referencia: ex ? ex.data_referencia : hoje,
@@ -258,92 +279,54 @@
             reader.readAsBinaryString(e.target.files[0]);
         });
 
-        function exportarExcel() {
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
-            const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
-            const wsData = dadosFiltrados.map(d => ({ "SLA": calcularSlaAtual(d) + "d", "ReqC": d.reqc, "Item": d.item, "Requisitante": d.nome, "WS": d.ws, "Subtipo": d.subtipo, "Texto": d.texto, "V. Unit": d.vunit, "V. Total": d.vtotal, "Obs": d.observacao }));
-            const ws = XLSX.utils.json_to_sheet(wsData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Ativos");
-            XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
+        function setFiltro(key, value) {
+            filtrosColuna[key] = value.toLowerCase();
+            render();
         }
 
-        // --- PDF MELHORADO: WS, VALORES E TEXTO SEM CORTES ---
-        function exportarPDFTabela() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('l', 'mm', 'a4'); // Paisagem para ganhar espaço
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
-            const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
-
-            pdf.setFontSize(14);
-            pdf.text("RELATÓRIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 12);
-            pdf.setFontSize(8);
-            pdf.text(`Documento gerado em: ${new Date().toLocaleString()}`, 15, 18);
-
-            const headers = [["SLA", "ReqC", "Item", "Requisitante", "WS", "Subtipo", "Texto Breve", "V. Unit", "V. Total", "Obs"]];
-            
-            const body = dadosFiltrados.map(d => [
-                calcularSlaAtual(d) + "d",
-                d.reqc,
-                d.item,
-                d.nome || "-",
-                d.ws || "-",
-                d.subtipo || "-",
-                d.texto || "-", // Texto agora pode quebrar linha
-                fmtMoeda(d.vunit),
-                fmtMoeda(d.vtotal),
-                d.observacao || ""
-            ]);
-
-            pdf.autoTable({
-                startY: 22,
-                head: headers,
-                body: body,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 5.5, // Fonte ajustada para caber as 10 colunas
-                    cellPadding: 1.5,
-                    overflow: 'linebreak' // PERMITE QUEBRA DE LINHA NO TEXTO
-                },
-                headStyles: { fillColor: [15, 23, 42], fontStyle: 'bold' },
-                columnStyles: {
-                    0: { cellWidth: 10 }, // SLA
-                    1: { cellWidth: 18 }, // ReqC
-                    2: { cellWidth: 8 },  // Item
-                    3: { cellWidth: 30 }, // Requisitante
-                    4: { cellWidth: 22 }, // WS
-                    5: { cellWidth: 20 }, // Subtipo
-                    6: { cellWidth: 55 }, // Texto Breve (Maior espaço e quebra linha)
-                    7: { cellWidth: 22 }, // V. Unit
-                    8: { cellWidth: 22 }, // V. Total
-                    9: { cellWidth: 'auto' } // Obs
-                }
-            });
-
-            pdf.save(`SLA_Relatorio_Mestre_${new Date().toLocaleDateString()}.pdf`);
-        }
-
-        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
+        const colunas = [
+            {key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},
+            {key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},
+            {key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}
+        ];
 
         function render() {
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const buscaGeral = document.getElementById('inputBusca').value.toLowerCase();
             const corpo = document.getElementById('tabela-corpo');
             const histBody = document.getElementById('tabela-historico');
-            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">Gestão</th>';
+            
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `
+                <th class="p-3">
+                    <div class="flex flex-col">
+                        <span>${c.label}</span>
+                        <input type="text" class="filter-input" placeholder="..." onkeyup="setFiltro('${c.key}', this.value)" onclick="event.stopPropagation()" value="${filtrosColuna[c.key] || ''}">
+                    </div>
+                </th>
+            `).join('') + '<th class="p-3 text-center">Gestão</th>';
+
             document.getElementById('header-historico').innerHTML = `<th class="p-3 text-blue-600">STATUS</th>` + colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">AÇÃO</th>';
+            
             corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
             demandas.forEach((d, idx) => {
-                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
-                const sla = calcularSlaAtual(d);
+                const slaCalculado = calcularSlaAtual(d);
+                const matchesGeral = !buscaGeral || Object.values(d).concat(slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+                const matchesColunas = colunas.every(col => {
+                    const val = (col.key === 'sla') ? String(slaCalculado) : String(d[col.key] || '');
+                    return !filtrosColuna[col.key] || val.toLowerCase().includes(filtrosColuna[col.key]);
+                });
+
+                if (!matchesGeral || !matchesColunas) return;
+
                 let cor = "bg-blue-100 text-blue-700";
-                if (sla > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
-                else if (sla > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
-                else if (sla > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
-                else if (sla > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+                if (slaCalculado > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (slaCalculado > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (slaCalculado > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (slaCalculado > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else counts.c15++;
-                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${sla}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${idx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
+
+                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${slaCalculado}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${idx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
             });
 
             historico.forEach((h, idx) => {
@@ -373,14 +356,42 @@
         function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
         function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
 
-        async function gerarPDF() {
-            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
-            pdf.setFontSize(20); pdf.text("SLA MESTRE - ANALYTICS", 15, 15);
-            const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0);
-            const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
-            pdf.addImage(imgSla, 'PNG', 15, 35, 130, 65); pdf.addImage(imgSub, 'PNG', 160, 35, 110, 65);
-            pdf.autoTable({ startY: 105, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto.substring(0,30), fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'grid', styles: { fontSize: 6 } });
-            pdf.save("SLA_Analytics.pdf");
+        // --- EXPORTAÇÕES ATUALIZADAS COM QUEBRA DE LINHA ---
+        function exportarExcel() {
+            const corpoTabela = document.getElementById('tabela-corpo');
+            const ws = XLSX.utils.table_to_sheet(corpoTabela.closest('table'));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Demandas");
+            XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
+        }
+
+        function exportarPDFTabela() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            pdf.setFontSize(14);
+            pdf.text("RELATÓRIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 12);
+            
+            const headers = [colunas.map(c => c.label)];
+            const body = Array.from(document.getElementById('tabela-corpo').rows).map(row => 
+                Array.from(row.cells).slice(0, 10).map(cell => cell.innerText)
+            );
+            
+            pdf.autoTable({ 
+                startY: 22, 
+                head: headers, 
+                body: body, 
+                theme: 'grid', 
+                styles: { 
+                    fontSize: 5.5, 
+                    overflow: 'linebreak', // QUEBRA DE LINHA NO PDF
+                    cellWidth: 'wrap' 
+                },
+                columnStyles: {
+                    6: { cellWidth: 50 }, // Coluna Texto com mais espaço para quebrar
+                    9: { cellWidth: 40 }  // Coluna Obs com mais espaço para quebrar
+                }
+            });
+            pdf.save(`SLA_Painel_${new Date().toLocaleDateString()}.pdf`);
         }
 
         function openCharts() {
