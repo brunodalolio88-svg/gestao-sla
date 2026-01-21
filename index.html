@@ -14,7 +14,6 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; font-size: 11px; }
-        /* AJUSTE TELA: Quebra de linha total */
         .col-texto-breve { 
             white-space: normal !important; 
             word-wrap: break-word; 
@@ -44,6 +43,7 @@
             outline: none;
         }
         .filter-input:focus { border-color: #3b82f6; }
+        .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.5; }
     </style>
 </head>
 <body>
@@ -105,7 +105,7 @@
 
             <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse" id="main-table">
                         <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]">
                             <tr id="header-principal"></tr>
                         </thead>
@@ -167,6 +167,7 @@
         let authKey = localStorage.getItem("sla_auth");
         let demandas = []; let historico = []; myCharts = { sla: null, sub: null };
         let filtrosColuna = {};
+        let ordenacao = { coluna: null, direcao: 1 }; // 1: ASC, -1: DESC
 
         window.onload = () => { 
             lucide.createIcons(); 
@@ -284,6 +285,17 @@
             render();
         }
 
+        // --- NOVA FUNÇÃO DE ORDENAÇÃO ---
+        function alterarOrdem(col) {
+            if (ordenacao.coluna === col) {
+                ordenacao.direcao *= -1;
+            } else {
+                ordenacao.coluna = col;
+                ordenacao.direcao = 1;
+            }
+            render();
+        }
+
         const colunas = [
             {key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},
             {key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},
@@ -296,9 +308,12 @@
             const histBody = document.getElementById('tabela-historico');
             
             document.getElementById('header-principal').innerHTML = colunas.map(c => `
-                <th class="p-3">
+                <th class="p-3" onclick="alterarOrdem('${c.key}')">
                     <div class="flex flex-col">
-                        <span>${c.label}</span>
+                        <div class="flex items-center justify-between">
+                            <span>${c.label}</span>
+                            <span class="sort-icon">${ordenacao.coluna === c.key ? (ordenacao.direcao === 1 ? '▲' : '▼') : '↕'}</span>
+                        </div>
                         <input type="text" class="filter-input" placeholder="..." onkeyup="setFiltro('${c.key}', this.value)" onclick="event.stopPropagation()" value="${filtrosColuna[c.key] || ''}">
                     </div>
                 </th>
@@ -309,24 +324,45 @@
             corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
-            demandas.forEach((d, idx) => {
-                const slaCalculado = calcularSlaAtual(d);
-                const matchesGeral = !buscaGeral || Object.values(d).concat(slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+            // Criar cópia para filtrar e ordenar
+            let listaRender = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
+
+            // Filtro Geral + Colunas
+            listaRender = listaRender.filter(d => {
+                const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
                 const matchesColunas = colunas.every(col => {
-                    const val = (col.key === 'sla') ? String(slaCalculado) : String(d[col.key] || '');
+                    const val = (col.key === 'sla') ? String(d.slaCalculado) : String(d[col.key] || '');
                     return !filtrosColuna[col.key] || val.toLowerCase().includes(filtrosColuna[col.key]);
                 });
+                return matchesGeral && matchesColunas;
+            });
 
-                if (!matchesGeral || !matchesColunas) return;
+            // Ordenação
+            if (ordenacao.coluna) {
+                listaRender.sort((a, b) => {
+                    let vA = (ordenacao.coluna === 'sla') ? a.slaCalculado : (a[ordenacao.coluna] || '');
+                    let vB = (ordenacao.coluna === 'sla') ? b.slaCalculado : (b[ordenacao.coluna] || '');
+                    
+                    if (!isNaN(vA) && !isNaN(vB)) { vA = Number(vA); vB = Number(vB); }
+                    
+                    if (vA < vB) return -1 * ordenacao.direcao;
+                    if (vA > vB) return 1 * ordenacao.direcao;
+                    return 0;
+                });
+            }
 
+            listaRender.forEach((d, idx) => {
                 let cor = "bg-blue-100 text-blue-700";
-                if (slaCalculado > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
-                else if (slaCalculado > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
-                else if (slaCalculado > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
-                else if (slaCalculado > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+                if (d.slaCalculado > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (d.slaCalculado > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (d.slaCalculado > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (d.slaCalculado > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else counts.c15++;
 
-                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${slaCalculado}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${idx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${idx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${idx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
+                // Encontrar o index original na array 'demandas' para as funções de botão
+                const originalIdx = demandas.findIndex(orig => orig.reqc === d.reqc && orig.item === d.item);
+
+                corpo.innerHTML += `<tr class="hover:bg-slate-50 border-b"><td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${d.slaCalculado}d</span></td><td class="p-3 font-bold">${d.reqc}</td><td class="p-3">${d.item}</td><td class="p-3">${d.nome}</td><td class="p-3">${d.ws}</td><td class="p-3 text-blue-600 font-bold">${d.subtipo}</td><td class="p-3 col-texto-breve text-[10px] text-slate-500">${d.texto}</td><td class="p-3">${fmtMoeda(d.vunit)}</td><td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td><td class="p-3 text-blue-900 italic font-medium">${d.observacao || ''}</td><td class="p-3 flex gap-1 justify-center"><button onclick="setStatus(${originalIdx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button><button onclick="setStatus(${originalIdx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button><button onclick="openEdit(${originalIdx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button></td></tr>`;
             });
 
             historico.forEach((h, idx) => {
@@ -356,13 +392,12 @@
         function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
         function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
 
-        // --- EXPORTAÇÕES ATUALIZADAS COM QUEBRA DE LINHA ---
         function exportarExcel() {
             const corpoTabela = document.getElementById('tabela-corpo');
             const ws = XLSX.utils.table_to_sheet(corpoTabela.closest('table'));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Demandas");
-            XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
+            XLSX.writeFile(wb, `SLA_Painel_${new Date().toLocaleDateString()}.xlsx`);
         }
 
         function exportarPDFTabela() {
@@ -370,27 +405,11 @@
             const pdf = new jsPDF('l', 'mm', 'a4');
             pdf.setFontSize(14);
             pdf.text("RELATÓRIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 12);
-            
             const headers = [colunas.map(c => c.label)];
             const body = Array.from(document.getElementById('tabela-corpo').rows).map(row => 
                 Array.from(row.cells).slice(0, 10).map(cell => cell.innerText)
             );
-            
-            pdf.autoTable({ 
-                startY: 22, 
-                head: headers, 
-                body: body, 
-                theme: 'grid', 
-                styles: { 
-                    fontSize: 5.5, 
-                    overflow: 'linebreak', // QUEBRA DE LINHA NO PDF
-                    cellWidth: 'wrap' 
-                },
-                columnStyles: {
-                    6: { cellWidth: 50 }, // Coluna Texto com mais espaço para quebrar
-                    9: { cellWidth: 40 }  // Coluna Obs com mais espaço para quebrar
-                }
-            });
+            pdf.autoTable({ startY: 22, head: headers, body: body, theme: 'grid', styles: { fontSize: 5.5, overflow: 'linebreak' }, columnStyles: { 6: { cellWidth: 50 }, 9: { cellWidth: 40 } } });
             pdf.save(`SLA_Painel_${new Date().toLocaleDateString()}.pdf`);
         }
 
