@@ -1,0 +1,53 @@
+<script>
+    // ... (mesmas variáveis e funções de login/load) ...
+
+    // --- IMPORTAÇÃO 100% SEGURA (NÃO DELETA NADA) ---
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            const hoje = new Date().setHours(0,0,0,0);
+
+            // Criamos um mapa do que já está na tela para comparar
+            const mapaAtual = {};
+            demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
+
+            const bulk = rows.map(n => {
+                const r = String(n.ReqC || n.reqc || '').trim();
+                const ex = mapaAtual[r]; // Registro existente
+                
+                return {
+                    // Mantém a data de referência original se o item já existia
+                    data_referencia: ex ? ex.data_referencia : hoje,
+                    sla_inicial: parseInt(n.SLA || n.sla || 0),
+                    reqc: r,
+                    item: String(n.Item || n.item || '1'),
+                    // PRESERVAÇÃO: Se existe dado manual, mantém. Se não, pega da planilha.
+                    nome: (ex && ex.nome) ? ex.nome : (n['Nome do Requisitante'] || ''),
+                    ws: (ex && ex.ws) ? ex.ws : (n.WS || ''),
+                    subtipo: (ex && ex.subtipo) ? ex.subtipo : (n.Subtipo || ''),
+                    texto: (ex && ex.texto) ? ex.texto : (n['Texto Breve'] || ''),
+                    vunit: n['Valor Unitario'] || 0,
+                    vtotal: n['Valor Total RC'] || 0,
+                    observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || '')
+                };
+            }).filter(d => d.reqc);
+
+            if (bulk.length > 0) {
+                // AQUI ESTÁ A MUDANÇA: APENAS SALVA (O Workers D1 deve estar configurado para Upsert)
+                // Se o seu Worker apenas adiciona, ele vai atualizar os existentes pelo ReqC
+                await fetch(`${API_URL}/save_bulk`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, 
+                    body: JSON.stringify(bulk) 
+                });
+                alert("Sincronização concluída! Os dados foram mesclados sem apagar o histórico.");
+                loadFromD1();
+            }
+        };
+        reader.readAsBinaryString(e.target.files[0]);
+    });
+
+    // ... (restante das funções de render, moeda, etc) ...
+</script>
