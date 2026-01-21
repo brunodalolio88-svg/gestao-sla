@@ -195,10 +195,8 @@
             await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
         }
 
-        // --- NOVA FUNÇÃO PARA TRATAR "R$ 100" NA IMPORTAÇÃO ---
         function limparMoedaImportacao(valor) {
             if (typeof valor !== 'string') return valor || 0;
-            // Remove R$, espaços e pontos de milhar, troca vírgula por ponto
             let limpo = valor.replace("R$", "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
             return parseFloat(limpo) || 0;
         }
@@ -227,7 +225,6 @@
                         ws: (ex && ex.ws) ? ex.ws : (n.WS || ''),
                         subtipo: (ex && ex.subtipo) ? ex.subtipo : (n.Subtipo || ''),
                         texto: (ex && ex.texto) ? ex.texto : (n['Texto Breve'] || ''),
-                        // APLICAÇÃO DA MÁSCARA NA IMPORTAÇÃO
                         vunit: limparMoedaImportacao(n['Valor Unitario']),
                         vtotal: limparMoedaImportacao(n['Valor Total RC']),
                         observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || '')
@@ -261,7 +258,6 @@
             reader.readAsBinaryString(e.target.files[0]);
         });
 
-        // --- AUXILIARES ---
         function exportarExcel() {
             const busca = document.getElementById('inputBusca').value.toLowerCase();
             const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
@@ -272,15 +268,59 @@
             XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
         }
 
+        // --- PDF MELHORADO: WS, VALORES E TEXTO SEM CORTES ---
         function exportarPDFTabela() {
-            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4'); // Paisagem para ganhar espaço
             const busca = document.getElementById('inputBusca').value.toLowerCase();
             const dadosFiltrados = demandas.filter(d => !busca || Object.values(d).some(v => String(v).toLowerCase().includes(busca)));
-            pdf.setFontSize(14); pdf.text("DEMANDAS ATIVAS - SLA MESTRE", 15, 15);
-            const headers = [["SLA", "ReqC", "Item", "Requisitante", "Subtipo", "V. Total", "Observações"]];
-            const body = dadosFiltrados.map(d => [calcularSlaAtual(d) + "d", d.reqc, d.item, d.nome, d.subtipo, fmtMoeda(d.vtotal), d.observacao || ""]);
-            pdf.autoTable({ startY: 25, head: headers, body: body, theme: 'grid', styles: { fontSize: 7 }, headStyles: { fillColor: [15, 23, 42] } });
-            pdf.save(`Relatorio_SLA_${new Date().toLocaleDateString()}.pdf`);
+
+            pdf.setFontSize(14);
+            pdf.text("RELATÓRIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 12);
+            pdf.setFontSize(8);
+            pdf.text(`Documento gerado em: ${new Date().toLocaleString()}`, 15, 18);
+
+            const headers = [["SLA", "ReqC", "Item", "Requisitante", "WS", "Subtipo", "Texto Breve", "V. Unit", "V. Total", "Obs"]];
+            
+            const body = dadosFiltrados.map(d => [
+                calcularSlaAtual(d) + "d",
+                d.reqc,
+                d.item,
+                d.nome || "-",
+                d.ws || "-",
+                d.subtipo || "-",
+                d.texto || "-", // Texto agora pode quebrar linha
+                fmtMoeda(d.vunit),
+                fmtMoeda(d.vtotal),
+                d.observacao || ""
+            ]);
+
+            pdf.autoTable({
+                startY: 22,
+                head: headers,
+                body: body,
+                theme: 'grid',
+                styles: { 
+                    fontSize: 5.5, // Fonte ajustada para caber as 10 colunas
+                    cellPadding: 1.5,
+                    overflow: 'linebreak' // PERMITE QUEBRA DE LINHA NO TEXTO
+                },
+                headStyles: { fillColor: [15, 23, 42], fontStyle: 'bold' },
+                columnStyles: {
+                    0: { cellWidth: 10 }, // SLA
+                    1: { cellWidth: 18 }, // ReqC
+                    2: { cellWidth: 8 },  // Item
+                    3: { cellWidth: 30 }, // Requisitante
+                    4: { cellWidth: 22 }, // WS
+                    5: { cellWidth: 20 }, // Subtipo
+                    6: { cellWidth: 55 }, // Texto Breve (Maior espaço e quebra linha)
+                    7: { cellWidth: 22 }, // V. Unit
+                    8: { cellWidth: 22 }, // V. Total
+                    9: { cellWidth: 'auto' } // Obs
+                }
+            });
+
+            pdf.save(`SLA_Relatorio_Mestre_${new Date().toLocaleDateString()}.pdf`);
         }
 
         const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
