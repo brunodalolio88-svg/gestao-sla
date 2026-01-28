@@ -42,6 +42,20 @@
 
         /* Animação para zoom da fonte */
         #main-table { transition: font-size 0.1s linear; }
+
+        /* --- BARRA DE ROLAGEM HORIZONTAL PERSONALIZADA (NOVO) --- */
+        /* Garante que a barra apareça e seja fácil de clicar */
+        .custom-scroll {
+            overflow-x: auto; /* Força rolagem horizontal se necessário */
+            overflow-y: hidden;
+            width: 100%;
+            display: block;
+            padding-bottom: 5px; /* Espaço para a barra não colar no texto */
+        }
+        .custom-scroll::-webkit-scrollbar { height: 12px; } /* Altura da barra horizontal */
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 6px; border: 2px solid #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
 <body>
@@ -116,8 +130,8 @@
                 <p class="text-[9px] text-gray-400 uppercase font-bold mt-1 italic">Preservação manual ativa. Itens ausentes serão movidos após confirmação.</p>
             </div>
 
-            <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
-                <div class="overflow-x-auto">
+            <div class="bg-white rounded shadow-xl border border-gray-200">
+                <div class="custom-scroll">
                     <table class="w-full text-left border-collapse" id="main-table">
                         <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]">
                             <tr id="header-principal"></tr>
@@ -133,7 +147,10 @@
         <div class="bg-white rounded-lg shadow-2xl max-w-6xl w-full p-6 h-[85vh] flex flex-col">
             <div class="flex justify-between items-center mb-6 border-b pb-2">
                 <h2 class="text-lg font-bold uppercase italic text-slate-800">Analytics Dashboard</h2>
-                <button onclick="closeCharts()" class="text-2xl">&times;</button>
+                <div class="flex gap-2">
+                    <button onclick="exportarPDFTabela()" class="bg-red-800 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2"><i data-lucide="file-text" class="w-3 h-3"></i> PDF Report</button>
+                    <button onclick="closeCharts()" class="text-2xl">&times;</button>
+                </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto p-4 flex-grow">
                 <div class="bg-gray-50 p-4 border rounded shadow-inner flex flex-col items-center">
@@ -218,11 +235,15 @@
             } 
         };
 
-        // --- PREFERÊNCIAS (ZOOM) ---
-        function applyPreferences() { document.getElementById('main-table').style.fontSize = tableFontSize + "px"; }
+        // --- VISUAL E PREFERÊNCIAS ---
+        function applyPreferences() {
+            document.getElementById('main-table').style.fontSize = tableFontSize + "px";
+        }
+
         function changeFontSize(delta) {
             tableFontSize += delta;
-            if(tableFontSize < 8) tableFontSize = 8; if(tableFontSize > 24) tableFontSize = 24;
+            if(tableFontSize < 8) tableFontSize = 8;
+            if(tableFontSize > 24) tableFontSize = 24;
             document.getElementById('main-table').style.fontSize = tableFontSize + "px";
             localStorage.setItem("sla_font_size", tableFontSize);
         }
@@ -249,7 +270,7 @@
             document.getElementById('user-avatar-display').src = savedAvatar || defaultAvatar;
         }
 
-        // --- LOGIN ---
+        // --- LOGIN E DADOS ---
         async function tentarLogin() {
             const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             if(!u || !p) return;
@@ -259,7 +280,8 @@
                 authKey = key.replace("Basic ", ""); 
                 localStorage.setItem("sla_auth", authKey); 
                 localStorage.setItem("sla_user", u);
-                updateProfile(u); applyPreferences();
+                updateProfile(u);
+                applyPreferences();
                 document.getElementById('tela-login').classList.add('hidden'); 
                 document.getElementById('painel-principal').style.display = "block"; loadFromD1(); 
             } else { document.getElementById('login-erro').classList.remove('hidden'); }
@@ -290,12 +312,16 @@
             const QUINZE_DIAS_MS = 15 * 24 * 60 * 60 * 1000;
             const itensParaDeletar = historico.filter(h => (hoje - h.data_referencia) > QUINZE_DIAS_MS);
             if (itensParaDeletar.length > 0) {
-                for (let item of itensParaDeletar) { await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ id: item.id }) }); }
+                for (let item of itensParaDeletar) {
+                    await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ id: item.id }) });
+                }
                 loadFromD1();
             }
         }
 
-        async function saveToD1(item) { await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) }); }
+        async function saveToD1(item) {
+            await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
+        }
 
         function limparMoedaImportacao(valor) {
             if (valor === undefined || valor === null) return 0;
@@ -311,7 +337,8 @@
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const hoje = new Date().setHours(0,0,0,0);
-                const mapaAtual = {}; demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
+                const mapaAtual = {};
+                demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
                 const reqcsNaPlanilha = new Set();
                 
                 const bulk = rows.map(n => {
@@ -337,19 +364,31 @@
                 const paraHistorico = [];
                 demandas.forEach(d => {
                     if (!reqcsNaPlanilha.has(String(d.reqc).trim())) {
-                        let itemFim = { ...d }; itemFim.status_final = "Concluído (Auto)"; itemFim.sla_no_fim = calcularSlaAtual(d); itemFim.data_referencia = hoje; paraHistorico.push(itemFim);
+                        let itemFim = { ...d };
+                        itemFim.status_final = "Concluído (Auto)";
+                        itemFim.sla_no_fim = calcularSlaAtual(d);
+                        itemFim.data_referencia = hoje;
+                        paraHistorico.push(itemFim);
                     }
                 });
 
-                if (paraHistorico.length > 0 && confirm(`Detectamos ${paraHistorico.length} itens ausentes. Mover para histórico?`)) { for (let item of paraHistorico) { await saveToD1(item); } }
-                if (bulk.length > 0) { await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) }); }
-                alert("Sincronização concluída!"); loadFromD1();
+                if (paraHistorico.length > 0 && confirm(`Detectamos ${paraHistorico.length} itens ausentes. Mover para histórico?`)) {
+                    for (let item of paraHistorico) { await saveToD1(item); }
+                }
+                if (bulk.length > 0) {
+                    await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                }
+                alert("Sincronização concluída!");
+                loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
         });
 
         function setFiltro(key, value) { filtrosColuna[key] = value.toLowerCase(); render(); }
-        function alterarOrdem(col) { if (ordenacao.coluna === col) { ordenacao.direcao *= -1; } else { ordenacao.coluna = col; ordenacao.direcao = 1; } render(); }
+        function alterarOrdem(col) {
+            if (ordenacao.coluna === col) { ordenacao.direcao *= -1; } else { ordenacao.coluna = col; ordenacao.direcao = 1; }
+            render();
+        }
 
         const colunas = [
             {key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},
@@ -365,7 +404,10 @@
             document.getElementById('header-principal').innerHTML = colunas.map(c => `
                 <th class="p-3" onclick="alterarOrdem('${c.key}')">
                     <div class="flex flex-col">
-                        <div class="flex items-center justify-between"><span>${c.label}</span><span class="sort-icon">${ordenacao.coluna === c.key ? (ordenacao.direcao === 1 ? '▲' : '▼') : '↕'}</span></div>
+                        <div class="flex items-center justify-between">
+                            <span>${c.label}</span>
+                            <span class="sort-icon">${ordenacao.coluna === c.key ? (ordenacao.direcao === 1 ? '▲' : '▼') : '↕'}</span>
+                        </div>
                         <input type="text" class="filter-input" placeholder="..." onkeyup="setFiltro('${c.key}', this.value)" onclick="event.stopPropagation()" value="${filtrosColuna[c.key] || ''}">
                     </div>
                 </th>
@@ -407,7 +449,7 @@
                 else counts.c15++;
 
                 const originalIdx = demandas.findIndex(orig => orig.reqc === d.reqc && orig.item === d.item);
-                const obsBg = d.obsColor || 'transparent'; // Fundo do campo
+                const obsBg = d.obsColor || 'transparent'; // Cor de fundo do campo Obs
 
                 corpo.innerHTML += `
                 <tr class="hover:bg-slate-50 border-b">
@@ -526,6 +568,7 @@
                 myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
             }, 300);
         }
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
