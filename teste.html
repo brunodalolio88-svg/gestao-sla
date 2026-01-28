@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLA Mestre - Dashboard Premium</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; font-size: 11px; }
+        .sidebar-bg { background-color: #1e1e2d; }
+        .active-menu { background-color: #2b2b40; color: white; border-left: 4px solid #6366f1; }
+        .inactive-menu { color: #a2a3b7; }
+        #tela-login { background: linear-gradient(135deg, #1e1e2d 0%, #2d2d44 100%); }
+        
+        th { resize: horizontal; overflow: auto; min-width: 70px; white-space: nowrap; }
+        .col-obs, .col-texto { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Estilos Dinâmicos controlados por JS */
+        #tabela-main-container { transition: font-size 0.2s ease; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen overflow-hidden flex">
+
+    <input type="file" id="avatarInput" class="hidden" accept="image/*">
+
+    <div id="tela-login" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+            <div class="mb-8">
+                <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><i data-lucide="shield-check" class="text-white w-8 h-8"></i></div>
+                <h2 class="text-2xl font-bold text-gray-800 uppercase italic">Gestão SLA</h2>
+            </div>
+            <div class="space-y-5 text-left">
+                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                <button onclick="tentarLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg">Entrar</button>
+            </div>
+            <p id="login-erro" class="text-red-500 mt-4 text-xs font-bold hidden uppercase text-center">Credenciais Inválidas</p>
+        </div>
+    </div>
+
+    <aside id="sidebar" class="sidebar-bg w-64 flex-shrink-0 hidden flex-col z-50 h-full">
+        <div class="h-20 flex items-center px-8 border-b border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-500 p-1.5 rounded-lg"><i data-lucide="bar-chart-2" class="text-white w-5 h-5"></i></div>
+                <span class="text-white font-bold text-lg tracking-wide uppercase">SLA Mestre</span>
+            </div>
+        </div>
+        <nav class="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg active-menu"><i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard</a>
+            <a href="#" onclick="openAddModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="plus-square" class="w-5 h-5"></i> Novo Manual</a>
+            <a href="#" onclick="document.getElementById('fileInput').click()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Excel<input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv"></a>
+            <a href="#" onclick="openArchive()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="archive" class="w-5 h-5"></i> Histórico</a>
+            <a href="#" onclick="openUserModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="users" class="w-5 h-5"></i> Usuários</a>
+            <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:text-red-400"><i data-lucide="log-out" class="w-5 h-5"></i> Sair</a>
+        </nav>
+        <div class="p-4 border-t border-gray-700 flex items-center gap-3">
+            <img id="sidebar-avatar" src="" class="w-14 h-14 rounded-full border-2 border-indigo-500 object-cover cursor-pointer" onclick="triggerAvatarUpload()">
+            <div><p id="sidebar-name" class="text-white text-sm font-bold capitalize"></p><p class="text-gray-500 text-[10px] uppercase">Online</p></div>
+        </div>
+    </aside>
+
+    <div id="main-content" class="flex-1 flex flex-col h-full hidden bg-[#f3f4f6]">
+        <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
+            <h1 class="text-xl font-bold text-gray-800 uppercase italic">Painel de Controle</h1>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase">Fonte</span>
+                    <button onclick="changeFontSize(-1)" class="w-6 h-6 flex items-center justify-center bg-white border rounded shadow-sm hover:bg-gray-100">-</button>
+                    <button onclick="changeFontSize(1)" class="w-6 h-6 flex items-center justify-center bg-white border rounded shadow-sm hover:bg-gray-100">+</button>
+                </div>
+                <div class="relative">
+                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Busca geral..." class="w-64 pl-10 pr-4 py-2 rounded-xl bg-gray-50 border-none outline-none text-sm focus:ring-2 focus:ring-indigo-100">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
+                </div>
+                <button onclick="gerarPDF()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-indigo-600"><i data-lucide="download" class="w-5 h-5"></i></button>
+                <button onclick="openCharts()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-indigo-600"><i data-lucide="maximize-2" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
+                    <div class="text-right"><p id="header-name" class="text-sm font-bold text-gray-800 capitalize"></p><p class="text-[10px] text-gray-500 uppercase">SLA Master</p></div>
+                    <img id="header-avatar" src="" class="w-12 h-12 rounded-xl shadow-sm object-cover cursor-pointer" onclick="triggerAvatarUpload()">
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-8">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">0-15 d</p><h3 id="count-15" class="text-2xl font-black text-blue-600">0</h3></div><i data-lucide="clock" class="text-blue-200"></i></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">16-30 d</p><h3 id="count-30" class="text-2xl font-black text-yellow-500">0</h3></div><i data-lucide="alert-circle" class="text-yellow-200"></i></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-orange-500 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">31-60 d</p><h3 id="count-60" class="text-2xl font-black text-orange-500">0</h3></div><i data-lucide="alert-triangle" class="text-orange-200"></i></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">61-90 d</p><h3 id="count-90" class="text-2xl font-black text-red-500">0</h3></div><i data-lucide="flame" class="text-red-200"></i></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">91+ d</p><h3 id="count-91" class="text-2xl font-black text-purple-600">0</h3></div><i data-lucide="bomb" class="text-purple-200"></i></div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                <div class="p-6 border-b flex justify-between items-center bg-white">
+                    <span class="font-bold text-gray-800 uppercase italic">Demandas em Aberto</span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Cor da Obs:</span>
+                        <input type="color" id="obsColorPicker" onchange="updateObsColor(this.value)" class="w-8 h-8 rounded border-none cursor-pointer bg-transparent">
+                    </div>
+                </div>
+                <div class="overflow-x-auto" id="tabela-main-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 border-b"><tr id="header-principal"></tr></thead>
+                        <tbody id="tabela-corpo" class="divide-y divide-gray-100 italic"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="archiveModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[95%] h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50"><h3 class="text-lg font-bold text-gray-800 uppercase italic">Histórico</h3><button onclick="closeArchive()" class="p-2 hover:bg-gray-200 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+            <div class="flex-1 overflow-auto"><table class="w-full text-left"><thead class="bg-gray-100 sticky top-0"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y text-[10px]"></tbody></table></div>
+        </div>
+    </div>
+
+    <div id="formModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b"><h2 id="modalTitle" class="text-xl font-bold text-indigo-900 uppercase italic">Manutenção</h2><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button></div>
+            <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <input type="hidden" id="editIndex">
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded-lg text-indigo-600 font-bold"></div>
+                <div class="md:col-span-2"><label class="block text-[10px] font-bold text-gray-400 uppercase">Texto Breve</label><input type="text" id="f-texto" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded-lg"></div>
+                <div class="md:col-span-4"><label class="block text-[10px] font-bold text-indigo-600 uppercase">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-indigo-50 p-3 rounded-lg"></textarea></div>
+                <div class="md:col-span-4 flex justify-end gap-3 pt-4 border-t"><button type="button" onclick="closeModal()" class="px-6 py-2 text-gray-500 font-bold uppercase">Cancelar</button><button type="submit" class="bg-indigo-600 text-white px-8 py-2 rounded-lg font-bold uppercase shadow-lg">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="chartModal" class="hidden fixed inset-0 bg-gray-900/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="w-full h-full flex flex-col">
+            <div class="flex justify-end mb-4"><button onclick="closeCharts()" class="text-white bg-white/20 p-2 rounded-full hover:bg-white/40"><i data-lucide="x"></i></button></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
+                <div class="bg-white rounded-2xl p-8 flex flex-col items-center"><h3 class="font-bold mb-4 uppercase text-gray-400">Aging SLA</h3><div class="w-full flex-1 relative"><canvas id="chartSlaFull"></canvas></div></div>
+                <div class="bg-white rounded-2xl p-8 flex flex-col items-center"><h3 class="font-bold mb-4 uppercase text-gray-400">Subtipos</h3><div class="w-full flex-1 relative"><canvas id="chartSubtipoFull"></canvas></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="userModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 uppercase italic">Novo Acesso</h2>
+            <div class="space-y-4">
+                <input type="text" id="new-user" placeholder="Login" class="w-full border p-3 rounded-xl"><input type="password" id="new-pass" placeholder="Senha" class="w-full border p-3 rounded-xl"><button onclick="cadastrarUsuario()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold uppercase">Cadastrar</button><button onclick="closeUserModal()" class="text-gray-400 text-sm mt-2 uppercase">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
+        let authKey = localStorage.getItem("sla_auth");
+        let currentUser = localStorage.getItem("sla_user") || "Usuário";
+        let tableFontSize = parseInt(localStorage.getItem("sla_font_size")) || 13;
+        let obsColor = localStorage.getItem("sla_obs_color") || "#9ca3af";
+        let demandas = []; let historico = []; 
+        let myCharts = { sla: null, sub: null };
+        let myChartsFull = { sla: null, sub: null };
+
+        window.onload = () => { 
+            lucide.createIcons(); 
+            if (authKey) { 
+                updateProfile(currentUser);
+                applyPreferences();
+                document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('sidebar').classList.remove('hidden').classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden');
+                loadFromD1(); 
+            } 
+        };
+
+        // --- PREFERÊNCIAS DE VISUALIZAÇÃO ---
+        function applyPreferences() {
+            document.getElementById('tabela-main-container').style.fontSize = tableFontSize + "px";
+            document.getElementById('obsColorPicker').value = obsColor;
+        }
+
+        function changeFontSize(delta) {
+            tableFontSize += delta;
+            if(tableFontSize < 8) tableFontSize = 8;
+            if(tableFontSize > 24) tableFontSize = 24;
+            document.getElementById('tabela-main-container').style.fontSize = tableFontSize + "px";
+            localStorage.setItem("sla_font_size", tableFontSize);
+        }
+
+        function updateObsColor(color) {
+            obsColor = color;
+            localStorage.setItem("sla_obs_color", color);
+            render(); // Re-renderiza para aplicar cor na coluna
+        }
+
+        // --- AVATAR E PERFIL ---
+        function triggerAvatarUpload() { document.getElementById('avatarInput').click(); }
+        document.getElementById('avatarInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => { localStorage.setItem(`sla_avatar_${currentUser}`, evt.target.result); updateProfile(currentUser); };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        function updateProfile(username) {
+            currentUser = username;
+            document.getElementById('header-name').innerText = username;
+            document.getElementById('sidebar-name').innerText = username;
+            const saved = localStorage.getItem(`sla_avatar_${username}`);
+            const def = `https://ui-avatars.com/api/?name=${username}&background=6366f1&color=fff&bold=true`;
+            document.getElementById('header-avatar').src = saved || def;
+            document.getElementById('sidebar-avatar').src = saved || def;
+        }
+
+        // --- LOGIN E DADOS ---
+        async function tentarLogin() {
+            const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
+            if(!u || !p) return;
+            const key = "Basic " + btoa(`${u}:${p}`);
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
+            if (res.status === 200) { 
+                authKey = key; localStorage.setItem("sla_auth", key); localStorage.setItem("sla_user", u);
+                updateProfile(u); document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('sidebar').classList.remove('hidden').classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden'); loadFromD1(); 
+            } else { document.getElementById('login-erro').classList.remove('hidden'); }
+        }
+
+        function logout() { localStorage.clear(); window.location.reload(); }
+        async function loadFromD1() { try { const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } }); const data = await res.json(); demandas = data.filter(d => !d.status_final); historico = data.filter(d => d.status_final); render(); } catch (e) { console.error(e); } }
+        async function saveToD1(item) { await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) }); }
+
+        document.getElementById('fileInput').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const hoje = new Date().setHours(0,0,0,0);
+                await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
+                const bulk = rows.map(n => ({
+                    sla_inicial: parseInt(n.SLA || n.sla || 0), data_referencia: hoje, reqc: String(n.ReqC || n.reqc || ''), 
+                    item: String(n.Item || n.item || '1'), nome: n['Nome do Requisitante'] || '', ws: n.WS || '', 
+                    subtipo: n.Subtipo || '', texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, 
+                    vtotal: n['Valor Total RC'] || 0, observacao: n.Observações || ''
+                })).filter(d => d.reqc);
+                await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                loadFromD1();
+            };
+            reader.readAsBinaryString(e.target.files[0]);
+        };
+
+        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto Breve'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
+
+        function render() {
+            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const corpo = document.getElementById('tabela-corpo');
+            const histBody = document.getElementById('tabela-historico');
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="px-6 py-4 font-bold text-gray-400">${c.label}</th>`).join('') + '<th class="px-6 py-4 text-center font-bold text-gray-400">AÇÕES</th>';
+            document.getElementById('header-historico').innerHTML = `<th class="px-4 py-3">STATUS</th>` + colunas.map(c => `<th class="px-4 py-3">${c.label}</th>`).join('') + '<th class="px-4 py-3 text-center">AÇÃO</th>';
+            corpo.innerHTML = ""; histBody.innerHTML = "";
+            let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
+
+            demandas.forEach((d, idx) => {
+                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
+                const sla = calcularSlaAtual(d);
+                let badge = "bg-blue-100 text-blue-700";
+                if (sla > 90) { badge = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (sla > 60) { badge = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (sla > 30) { badge = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (sla > 15) { badge = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+                else counts.c15++;
+
+                corpo.innerHTML += `<tr class="hover:bg-gray-50 border-b border-gray-100">
+                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badge}">${sla}d</span></td>
+                    <td class="px-6 py-4 font-bold text-gray-700">${d.reqc}</td>
+                    <td class="px-6 py-4">${d.item}</td>
+                    <td class="px-6 py-4 text-gray-500">${d.nome}</td>
+                    <td class="px-6 py-4 text-gray-500">${d.ws}</td>
+                    <td class="px-6 py-4"><span class="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">${d.subtipo}</span></td>
+                    <td class="px-6 py-4 col-texto text-gray-400 text-xs" title="${d.texto}">${d.texto}</td>
+                    <td class="px-6 py-4">${fmtMoeda(d.vunit)}</td>
+                    <td class="px-6 py-4 font-bold text-gray-700">${fmtMoeda(d.vtotal)}</td>
+                    <td class="px-6 py-4 col-obs italic text-xs" style="color: ${obsColor}" title="${d.observacao || ''}">${d.observacao || '-'}</td>
+                    <td class="px-6 py-4"><div class="flex items-center justify-center gap-2">
+                        <button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="p-1 rounded bg-green-50 text-green-600">✔</button>
+                        <button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="p-1 rounded bg-red-50 text-red-600">✘</button>
+                        <button onclick="openEdit(${demandas.indexOf(d)})" class="p-1 rounded bg-blue-50 text-blue-600">✎</button>
+                    </div></td></tr>`;
+            });
+            historico.forEach((h, idx) => { histBody.innerHTML += `<tr class="hover:bg-gray-50 border-b"><td class="px-4 py-3 font-bold ${h.status_final==='Concluído'?'text-green-700':'text-red-700'}">${h.status_final}</td><td class="px-4 py-3">${h.sla_no_fim}d</td><td class="px-4 py-3 font-bold">${h.reqc}</td><td class="px-4 py-3">${h.item}</td><td class="px-4 py-3">${h.nome}</td><td class="px-4 py-3">${h.ws}</td><td class="px-4 py-3">${h.subtipo}</td><td class="px-4 py-3 text-xs truncate max-w-[100px]">${h.texto}</td><td class="px-4 py-3">${fmtMoeda(h.vunit)}</td><td class="px-4 py-3 font-bold">${fmtMoeda(h.vtotal)}</td><td class="px-4 py-3 italic text-gray-400">${h.observacao || ''}</td><td class="px-4 py-3 text-center"><button onclick="reativar(${idx})" class="text-indigo-600 font-bold hover:underline">REATIVAR</button></td></tr>`; });
+            document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
+            lucide.createIcons(); updateCharts(counts, demandas, false);
+        }
+
+        // --- GRÁFICOS ---
+        function updateCharts(counts, data, isFull = false) {
+            const subMap = {}; data.forEach(d => { const s = d.subtipo || "Não Info"; subMap[s] = (subMap[s] || 0) + 1; });
+            const idSla = isFull ? 'chartSlaFull' : 'chartSla'; const idSub = isFull ? 'chartSubtipoFull' : 'chartSubtipo'; const chartObj = isFull ? myChartsFull : myCharts;
+            const ctxSla = document.getElementById(idSla); if(chartObj.sla) chartObj.sla.destroy();
+            chartObj.sla = new Chart(ctxSla, { type: 'bar', data: { labels: ['0-15', '16-30', '31-60', '61-90', '91+'], datasets: [{ label: 'Demandas', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#eab308', '#f97316', '#ef4444', '#9333ea'], borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
+            const ctxSub = document.getElementById(idSub); if(chartObj.sub) chartObj.sub.destroy();
+            chartObj.sub = new Chart(ctxSub, { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%' } });
+        }
+
+        function openCharts() { document.getElementById('chartModal').classList.remove('hidden'); let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; demandas.forEach(d => { const sla = calcularSlaAtual(d); if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++; }); setTimeout(() => updateCharts(counts, demandas, true), 100); }
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+
+        async function gerarPDF() {
+            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
+            pdf.setFontSize(18); pdf.text("Relatório Executivo de SLA", 15, 15);
+            const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0); const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
+            pdf.addImage(imgSla, 'PNG', 15, 30, 130, 60); pdf.addImage(imgSub, 'PNG', 160, 30, 120, 60);
+            pdf.autoTable({ startY: 100, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto, fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'striped', styles: { fontSize: 7 } });
+            pdf.save("Dashboard_SLA.pdf");
+        }
+
+        function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
+        function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
+        function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+        function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
+        async function setStatus(idx, s) { if(!confirm(`Confirmar: ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
+        async function reativar(idx) { if(!confirm("Reativar demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
+
+        document.getElementById('demandaForm').onsubmit = async (e) => {
+            e.preventDefault(); const idx = document.getElementById('editIndex').value;
+            const data = { sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), observacao: document.getElementById('f-obs').value };
+            await saveToD1(data); closeModal(); loadFromD1();
+        };
+
+        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('formModal').classList.remove('hidden'); }
+        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || ''; document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || ''; document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
+        function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
+        function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
+        function openUserModal() { document.getElementById('userModal').classList.remove('hidden'); }
+        function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
+        async function cadastrarUsuario() { const u = document.getElementById('new-user').value; const p = document.getElementById('new-pass').value; await fetch(`${API_URL}/save_user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ username: u, password: p }) }); alert("Autorizado!"); closeUserModal(); }
+    </script>
+</body>
+</html>
