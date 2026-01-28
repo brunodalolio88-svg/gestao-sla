@@ -24,7 +24,6 @@
             cursor: help;
         }
         
-        /* Ajuste para Colunas Redimensionáveis */
         th { 
             cursor: col-resize; 
             transition: background-color 0.2s; 
@@ -44,7 +43,6 @@
         #painel-principal { display: none; }
         .chart-box { position: relative; height: 300px; width: 100%; }
         
-        /* Filtros da Tabela */
         .filter-input {
             width: 100%; margin-top: 4px; padding: 2px 4px; font-weight: normal;
             font-size: 9px; border: 1px solid #e2e8f0; border-radius: 4px;
@@ -53,7 +51,6 @@
         .filter-input:focus { border-color: #3b82f6; }
         .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.5; }
 
-        /* Animação suave para troca de fonte */
         #main-table { transition: font-size 0.2s ease; }
     </style>
 </head>
@@ -91,10 +88,6 @@
                         <button onclick="changeFontSize(-1)" class="w-5 h-5 flex items-center justify-center bg-slate-700 rounded hover:bg-slate-600 text-[10px] font-bold">-</button>
                         <span class="text-[9px] uppercase font-bold text-slate-400">Fonte</span>
                         <button onclick="changeFontSize(1)" class="w-5 h-5 flex items-center justify-center bg-slate-700 rounded hover:bg-slate-600 text-[10px] font-bold">+</button>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-slate-700">
-                        <span class="text-[9px] uppercase font-bold text-slate-400">Cor Obs:</span>
-                        <input type="color" id="obsColorPicker" onchange="updateObsColor(this.value)" class="w-4 h-4 bg-transparent border-none cursor-pointer p-0">
                     </div>
                 </div>
 
@@ -185,6 +178,15 @@
                 <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Texto Breve</label><input type="text" id="f-texto" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 italic">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
                 <div><label class="font-bold text-gray-400 italic">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
+                
+                <div>
+                    <label class="font-bold text-gray-400 italic">Cor Destaque Obs</label>
+                    <div class="flex items-center gap-2 border p-2 rounded">
+                        <input type="color" id="f-obsColor" class="w-8 h-6 bg-transparent border-none cursor-pointer p-0" value="#374151">
+                        <span class="text-xs text-gray-400">Escolha a cor</span>
+                    </div>
+                </div>
+
                 <div class="md:col-span-4"><label class="font-bold text-blue-600 italic underline">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-blue-50 p-2 rounded italic outline-none"></textarea></div>
                 <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4"><button type="button" onclick="closeModal()" class="px-4 text-gray-400 font-bold uppercase">Cancelar</button><button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase">Salvar</button></div>
             </form>
@@ -203,9 +205,7 @@
         let authKey = localStorage.getItem("sla_auth");
         let currentUser = localStorage.getItem("sla_user") || "Usuário";
         
-        // Configurações Persistentes
         let tableFontSize = parseInt(localStorage.getItem("sla_font_size")) || 11;
-        let obsColor = localStorage.getItem("sla_obs_color") || "#1e3a8a"; // Azul escuro padrão
 
         let demandas = []; let historico = []; myCharts = { sla: null, sub: null };
         let filtrosColuna = {};
@@ -214,7 +214,7 @@
         window.onload = () => { 
             lucide.createIcons(); 
             if (authKey) { 
-                applyPreferences(); // Aplica cor e fonte salvas
+                applyPreferences();
                 updateProfile(currentUser);
                 document.getElementById('tela-login').classList.add('hidden'); 
                 document.getElementById('painel-principal').style.display = "block"; 
@@ -222,10 +222,9 @@
             } 
         };
 
-        // --- PREFERÊNCIAS VISUAIS ---
+        // --- VISUAL E PREFERÊNCIAS ---
         function applyPreferences() {
             document.getElementById('main-table').style.fontSize = tableFontSize + "px";
-            document.getElementById('obsColorPicker').value = obsColor;
         }
 
         function changeFontSize(delta) {
@@ -234,12 +233,6 @@
             if(tableFontSize > 24) tableFontSize = 24;
             document.getElementById('main-table').style.fontSize = tableFontSize + "px";
             localStorage.setItem("sla_font_size", tableFontSize);
-        }
-
-        function updateObsColor(color) {
-            obsColor = color;
-            localStorage.setItem("sla_obs_color", color);
-            render(); // Re-renderiza para aplicar a nova cor
         }
 
         // --- AVATAR E PERFIL ---
@@ -259,15 +252,12 @@
         function updateProfile(username) {
             currentUser = username;
             document.getElementById('user-name-display').innerText = username;
-            
             const savedAvatar = localStorage.getItem(`sla_avatar_${username}`);
-            // Avatar padrão com as iniciais do usuário
             const defaultAvatar = `https://ui-avatars.com/api/?name=${username}&background=3b82f6&color=fff&bold=true`;
-            
             document.getElementById('user-avatar-display').src = savedAvatar || defaultAvatar;
         }
 
-        // --- LOGIN E LÓGICA ---
+        // --- LOGIN E DADOS ---
         async function tentarLogin() {
             const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             if(!u || !p) return;
@@ -276,7 +266,7 @@
             if (res.status === 200) { 
                 authKey = key.replace("Basic ", ""); 
                 localStorage.setItem("sla_auth", authKey); 
-                localStorage.setItem("sla_user", u); // Salva nome para exibir
+                localStorage.setItem("sla_user", u);
                 updateProfile(u);
                 applyPreferences();
                 document.getElementById('tela-login').classList.add('hidden'); 
@@ -346,7 +336,8 @@
                         texto: (ex && ex.texto) ? ex.texto : (n['Texto Breve'] || ''),
                         vunit: limparMoedaImportacao(n['Valor Unitario'] || n['Valor Unitário']),
                         vtotal: limparMoedaImportacao(n['Valor Total RC']),
-                        observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || '')
+                        observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || ''),
+                        obsColor: (ex && ex.obsColor) ? ex.obsColor : '#374151' // Mantém cor se já existir
                     };
                 }).filter(d => d !== null);
 
@@ -438,8 +429,8 @@
                 else counts.c15++;
 
                 const originalIdx = demandas.findIndex(orig => orig.reqc === d.reqc && orig.item === d.item);
+                const obsColor = d.obsColor || '#374151'; // Cor individual ou padrão
 
-                // APLICAÇÃO DE ESTILOS DE COR E TOOLTIP
                 corpo.innerHTML += `
                 <tr class="hover:bg-slate-50 border-b">
                     <td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${d.slaCalculado}d</span></td>
@@ -476,16 +467,33 @@
 
         document.getElementById('demandaForm').onsubmit = async (e) => {
             e.preventDefault(); const idx = document.getElementById('editIndex').value;
-            const data = { sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), observacao: document.getElementById('f-obs').value };
+            const data = { 
+                sla_inicial: document.getElementById('f-sla').value, data_referencia: idx !== "" ? demandas[idx].data_referencia : new Date().setHours(0,0,0,0), reqc: document.getElementById('f-reqc').value, 
+                item: document.getElementById('f-item').value, nome: document.getElementById('f-nome').value, ws: document.getElementById('f-ws').value, subtipo: document.getElementById('f-sub').value, 
+                texto: document.getElementById('f-texto').value, vunit: parseNum(document.getElementById('f-vunit').value), vtotal: parseNum(document.getElementById('f-vtotal').value), 
+                observacao: document.getElementById('f-obs').value,
+                obsColor: document.getElementById('f-obsColor').value // Salva a cor individual
+            };
             await saveToD1(data); closeModal(); loadFromD1();
         };
 
         function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('modalTitle').innerText = "Adicionar Demanda Manual"; document.getElementById('formModal').classList.remove('hidden'); }
-        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('modalTitle').innerText = "Editar Registro"; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || ''; document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || ''; document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); }
+        
+        function openEdit(idx) { 
+            const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('modalTitle').innerText = "Editar Registro"; 
+            document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; 
+            document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || ''; 
+            document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || ''; 
+            document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); 
+            document.getElementById('f-obs').value = d.observacao || ''; 
+            document.getElementById('f-obsColor').value = d.obsColor || '#374151'; // Carrega a cor salva
+            document.getElementById('formModal').classList.remove('hidden'); 
+        }
         function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
         function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
         function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
-        
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
+
         // --- FUNÇÕES GRÁFICOS E PDF ---
         function exportarExcel() {
             // ... (Mesma lógica de exportação, mantida do original)
@@ -534,7 +542,6 @@
                 myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
             }, 300);
         }
-        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
