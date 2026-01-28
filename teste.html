@@ -17,7 +17,7 @@
         
         /* Ajuste de Texto Breve e Obs para Quebra de Linha e Tooltip */
         .col-texto-breve, .col-obs { 
-            white-space: normal !important; /* Permite quebra de linha */
+            white-space: normal !important; 
             word-wrap: break-word;
             overflow-wrap: break-word;
             min-width: 150px;
@@ -209,9 +209,10 @@
         let tableFontSize = parseInt(localStorage.getItem("sla_font_size")) || 11;
 
         let demandas = []; let historico = []; myCharts = { sla: null, sub: null };
-        let filtrosColuna = {};
-        // ORDENAÇÃO PADRÃO: REQC CRESCENTE
-        let ordenacao = { coluna: 'reqc', direcao: 1 };
+        
+        // --- MEMÓRIA DE FILTROS E ORDENAÇÃO (O SEGREDO) ---
+        let filtrosColuna = JSON.parse(localStorage.getItem("sla_filtros")) || {};
+        let ordenacao = JSON.parse(localStorage.getItem("sla_ordenacao")) || { coluna: 'reqc', direcao: 1 };
 
         window.onload = () => { 
             lucide.createIcons(); 
@@ -373,9 +374,16 @@
             reader.readAsBinaryString(e.target.files[0]);
         });
 
-        function setFiltro(key, value) { filtrosColuna[key] = value.toLowerCase(); render(); }
+        // --- FILTROS E ORDENAÇÃO COM PERSISTÊNCIA ---
+        function setFiltro(key, value) { 
+            filtrosColuna[key] = value.toLowerCase(); 
+            localStorage.setItem("sla_filtros", JSON.stringify(filtrosColuna));
+            render(); 
+        }
+        
         function alterarOrdem(col) {
             if (ordenacao.coluna === col) { ordenacao.direcao *= -1; } else { ordenacao.coluna = col; ordenacao.direcao = 1; }
+            localStorage.setItem("sla_ordenacao", JSON.stringify(ordenacao));
             render();
         }
 
@@ -438,7 +446,7 @@
                 else counts.c15++;
 
                 const originalIdx = demandas.findIndex(orig => orig.reqc === d.reqc && orig.item === d.item);
-                const obsBg = d.obsColor || 'transparent'; // Cor de fundo do campo Obs
+                const obsBg = d.obsColor || 'transparent'; 
 
                 corpo.innerHTML += `
                 <tr class="hover:bg-slate-50 border-b">
@@ -451,7 +459,7 @@
                     <td class="p-3 col-texto-breve text-[10px] text-slate-500" title="${d.texto}">${d.texto}</td>
                     <td class="p-3">${fmtMoeda(d.vunit)}</td>
                     <td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td>
-                    <td class="p-3 col-texto-breve italic font-medium" style="background-color: ${obsBg}" title="${d.observacao || ''}">${d.observacao || ''}</td>
+                    <td class="p-3 col-obs italic font-medium" style="background-color: ${obsBg}" title="${d.observacao || ''}">${d.observacao || ''}</td>
                     <td class="p-3 flex gap-1 justify-center">
                         <button onclick="setStatus(${originalIdx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button>
                         <button onclick="setStatus(${originalIdx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button>
