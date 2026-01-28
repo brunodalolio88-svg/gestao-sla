@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLA Mestre - Dashboard Premium</title>
+    <title>SLA Mestre - Painel de Demandas</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,154 +12,189 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; font-size: 11px; }
-        .sidebar-bg { background-color: #1e1e2d; }
-        .active-menu { background-color: #2b2b40; color: white; border-left: 4px solid #6366f1; }
-        .inactive-menu { color: #a2a3b7; }
-        #tela-login { background: linear-gradient(135deg, #1e1e2d 0%, #2d2d44 100%); }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; font-size: 11px; }
         
-        th { resize: horizontal; overflow: auto; min-width: 70px; white-space: nowrap; }
-        .col-obs, .col-texto { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Ajuste para Tooltip e Quebra de Texto */
+        .col-texto-breve { 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            max-width: 250px; 
+            cursor: help;
+        }
+        
+        /* Ajuste para Colunas Redimensionáveis */
+        th { 
+            cursor: col-resize; 
+            transition: background-color 0.2s; 
+            position: relative; 
+            vertical-align: top;
+            resize: horizontal;
+            overflow: auto;
+            min-width: 80px;
+        }
+        th:hover { background-color: #f1f5f9; }
 
-        /* Estilos Dinâmicos controlados por JS */
-        #tabela-main-container { transition: font-size 0.2s ease; }
+        #tela-login {
+            background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), 
+                        url('https://sla.kynto.com.br/sla.jpeg');
+            background-size: cover; background-position: center;
+        }
+        #painel-principal { display: none; }
+        .chart-box { position: relative; height: 300px; width: 100%; }
+        
+        /* Filtros da Tabela */
+        .filter-input {
+            width: 100%; margin-top: 4px; padding: 2px 4px; font-weight: normal;
+            font-size: 9px; border: 1px solid #e2e8f0; border-radius: 4px;
+            color: #475569; outline: none;
+        }
+        .filter-input:focus { border-color: #3b82f6; }
+        .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.5; }
+
+        /* Animação suave para troca de fonte */
+        #main-table { transition: font-size 0.2s ease; }
     </style>
 </head>
-<body class="text-gray-800 h-screen overflow-hidden flex">
+<body>
 
     <input type="file" id="avatarInput" class="hidden" accept="image/*">
 
-    <div id="tela-login" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
-        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
-            <div class="mb-8">
-                <div class="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><i data-lucide="shield-check" class="text-white w-8 h-8"></i></div>
-                <h2 class="text-2xl font-bold text-gray-800 uppercase italic">Gestão SLA</h2>
+    <div id="tela-login" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 text-center">
+            <div class="mb-6">
+                <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <i data-lucide="shield-check" class="text-white w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-black text-white uppercase italic">Gestão SLA</h2>
             </div>
-            <div class="space-y-5 text-left">
-                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-                <button onclick="tentarLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg">Entrar</button>
+            <div class="space-y-4">
+                <input type="text" id="login-user" placeholder="Usuário" class="w-full bg-white/20 rounded-xl py-3 px-4 text-white outline-none border-none placeholder:text-white/50 focus:ring-2 focus:ring-blue-500 transition-all">
+                <input type="password" id="login-pass" placeholder="Senha" class="w-full bg-white/20 rounded-xl py-3 px-4 text-white outline-none border-none placeholder:text-white/50 focus:ring-2 focus:ring-blue-500 transition-all">
+                <button onclick="tentarLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl uppercase text-[10px] tracking-widest transition-all">Entrar</button>
             </div>
-            <p id="login-erro" class="text-red-500 mt-4 text-xs font-bold hidden uppercase text-center">Credenciais Inválidas</p>
+            <p id="login-erro" class="text-red-400 mt-4 text-[10px] hidden font-bold uppercase">Credenciais Inválidas</p>
         </div>
     </div>
 
-    <aside id="sidebar" class="sidebar-bg w-64 flex-shrink-0 hidden flex-col z-50 h-full">
-        <div class="h-20 flex items-center px-8 border-b border-gray-700">
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-500 p-1.5 rounded-lg"><i data-lucide="bar-chart-2" class="text-white w-5 h-5"></i></div>
-                <span class="text-white font-bold text-lg tracking-wide uppercase">SLA Mestre</span>
-            </div>
-        </div>
-        <nav class="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg active-menu"><i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard</a>
-            <a href="#" onclick="openAddModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="plus-square" class="w-5 h-5"></i> Novo Manual</a>
-            <a href="#" onclick="document.getElementById('fileInput').click()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Importar Excel<input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv"></a>
-            <a href="#" onclick="openArchive()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="archive" class="w-5 h-5"></i> Histórico</a>
-            <a href="#" onclick="openUserModal()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:bg-gray-700"><i data-lucide="users" class="w-5 h-5"></i> Usuários</a>
-            <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg inactive-menu hover:text-red-400"><i data-lucide="log-out" class="w-5 h-5"></i> Sair</a>
-        </nav>
-        <div class="p-4 border-t border-gray-700 flex items-center gap-3">
-            <img id="sidebar-avatar" src="" class="w-14 h-14 rounded-full border-2 border-indigo-500 object-cover cursor-pointer" onclick="triggerAvatarUpload()">
-            <div><p id="sidebar-name" class="text-white text-sm font-bold capitalize"></p><p class="text-gray-500 text-[10px] uppercase">Online</p></div>
-        </div>
-    </aside>
-
-    <div id="main-content" class="flex-1 flex flex-col h-full hidden bg-[#f3f4f6]">
-        <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
-            <h1 class="text-xl font-bold text-gray-800 uppercase italic">Painel de Controle</h1>
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase">Fonte</span>
-                    <button onclick="changeFontSize(-1)" class="w-6 h-6 flex items-center justify-center bg-white border rounded shadow-sm hover:bg-gray-100">-</button>
-                    <button onclick="changeFontSize(1)" class="w-6 h-6 flex items-center justify-center bg-white border rounded shadow-sm hover:bg-gray-100">+</button>
-                </div>
-                <div class="relative">
-                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Busca geral..." class="w-64 pl-10 pr-4 py-2 rounded-xl bg-gray-50 border-none outline-none text-sm focus:ring-2 focus:ring-indigo-100">
-                    <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
-                </div>
-                <button onclick="gerarPDF()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-indigo-600"><i data-lucide="download" class="w-5 h-5"></i></button>
-                <button onclick="openCharts()" class="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-indigo-600"><i data-lucide="maximize-2" class="w-5 h-5"></i></button>
-                <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
-                    <div class="text-right"><p id="header-name" class="text-sm font-bold text-gray-800 capitalize"></p><p class="text-[10px] text-gray-500 uppercase">SLA Master</p></div>
-                    <img id="header-avatar" src="" class="w-12 h-12 rounded-xl shadow-sm object-cover cursor-pointer" onclick="triggerAvatarUpload()">
-                </div>
-            </div>
-        </header>
-
-        <main class="flex-1 overflow-y-auto p-8">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">0-15 d</p><h3 id="count-15" class="text-2xl font-black text-blue-600">0</h3></div><i data-lucide="clock" class="text-blue-200"></i></div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">16-30 d</p><h3 id="count-30" class="text-2xl font-black text-yellow-500">0</h3></div><i data-lucide="alert-circle" class="text-yellow-200"></i></div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-orange-500 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">31-60 d</p><h3 id="count-60" class="text-2xl font-black text-orange-500">0</h3></div><i data-lucide="alert-triangle" class="text-orange-200"></i></div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">61-90 d</p><h3 id="count-90" class="text-2xl font-black text-red-500">0</h3></div><i data-lucide="flame" class="text-red-200"></i></div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><div><p class="text-gray-400 font-bold text-[10px]">91+ d</p><h3 id="count-91" class="text-2xl font-black text-purple-600">0</h3></div><i data-lucide="bomb" class="text-purple-200"></i></div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                <div class="p-6 border-b flex justify-between items-center bg-white">
-                    <span class="font-bold text-gray-800 uppercase italic">Demandas em Aberto</span>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase">Cor da Obs:</span>
-                        <input type="color" id="obsColorPicker" onchange="updateObsColor(this.value)" class="w-8 h-8 rounded border-none cursor-pointer bg-transparent">
+    <div id="painel-principal">
+        <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-md">
+            <div class="container mx-auto flex flex-wrap justify-between items-center gap-4">
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield-check" class="text-blue-400"></i>
+                        <h1 class="font-bold text-base uppercase tracking-wider">Gestão SLA</h1>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-slate-700 ml-4">
+                        <button onclick="changeFontSize(-1)" class="w-5 h-5 flex items-center justify-center bg-slate-700 rounded hover:bg-slate-600 text-[10px] font-bold">-</button>
+                        <span class="text-[9px] uppercase font-bold text-slate-400">Fonte</span>
+                        <button onclick="changeFontSize(1)" class="w-5 h-5 flex items-center justify-center bg-slate-700 rounded hover:bg-slate-600 text-[10px] font-bold">+</button>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-slate-700">
+                        <span class="text-[9px] uppercase font-bold text-slate-400">Cor Obs:</span>
+                        <input type="color" id="obsColorPicker" onchange="updateObsColor(this.value)" class="w-4 h-4 bg-transparent border-none cursor-pointer p-0">
                     </div>
                 </div>
-                <div class="overflow-x-auto" id="tabela-main-container">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 border-b"><tr id="header-principal"></tr></thead>
-                        <tbody id="tabela-corpo" class="divide-y divide-gray-100 italic"></tbody>
+
+                <div class="relative flex-grow max-sm:w-full max-w-md">
+                    <input type="text" id="inputBusca" onkeyup="render()" placeholder="Busca geral..." class="w-full pl-10 pr-4 py-2 rounded bg-slate-800 border border-slate-700 outline-none text-sm focus:ring-2 focus:ring-blue-500 text-white">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
+                </div>
+
+                <div class="flex gap-2 text-[10px] flex-wrap justify-center items-center">
+                    <button onclick="exportarExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> EXCEL</button>
+                    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded font-bold flex items-center gap-2 shadow-sm transition-all"><i data-lucide="plus-circle" class="w-4 h-4"></i> NOVO</button>
+                    <button onclick="openCharts()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded font-bold"><i data-lucide="pie-chart" class="w-4 h-4"></i></button>
+                    <button onclick="openArchive()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded font-bold"><i data-lucide="archive" class="w-4 h-4"></i></button>
+                    
+                    <div class="flex items-center gap-2 pl-2 border-l border-slate-700 ml-2">
+                        <div class="text-right hidden md:block leading-tight">
+                            <p id="user-name-display" class="font-bold text-white capitalize">Usuário</p>
+                            <p class="text-[9px] text-slate-400">Online</p>
+                        </div>
+                        <img id="user-avatar-display" src="" class="w-8 h-8 rounded-full border-2 border-blue-500 cursor-pointer hover:opacity-80 transition-opacity object-cover" onclick="triggerAvatarUpload()" title="Alterar Foto">
+                        <button onclick="logout()" class="text-red-400 hover:text-red-300 ml-1"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container mx-auto p-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 text-center">
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">0-15 d</span><span id="count-15" class="text-2xl font-black text-blue-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-yellow-400 flex justify-between items-center"><span class="font-bold text-gray-400 italic">16-30 d</span><span id="count-30" class="text-2xl font-black text-yellow-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-orange-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">31-60 d</span><span id="count-60" class="text-2xl font-black text-orange-500">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500 flex justify-between items-center"><span class="font-bold text-gray-400 italic">61-90 d</span><span id="count-90" class="text-2xl font-black text-red-600">0</span></div>
+                <div class="bg-white p-4 rounded shadow-sm border-l-4 border-purple-600 flex justify-between items-center"><span class="font-bold text-gray-400 italic">91+ d</span><span id="count-91" class="text-2xl font-black text-purple-700">0</span></div>
+            </div>
+
+            <div class="bg-white p-4 rounded border-2 border-dashed border-gray-300 mb-6 text-center hover:border-blue-500 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+                <i data-lucide="upload" class="mx-auto text-blue-500 mb-1 group-hover:scale-110 transition-transform"></i>
+                <p class="font-bold text-gray-600 text-sm">Sincronizar Planilha Master</p>
+            </div>
+
+            <div class="bg-white rounded shadow-xl overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="main-table">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b text-[10px]">
+                            <tr id="header-principal"></tr>
+                        </thead>
+                        <tbody id="tabela-corpo" class="divide-y divide-gray-100 bg-white font-medium italic"></tbody>
                     </table>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="archiveModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[95%] h-[90vh] flex flex-col overflow-hidden">
-            <div class="p-6 border-b flex justify-between items-center bg-gray-50"><h3 class="text-lg font-bold text-gray-800 uppercase italic">Histórico</h3><button onclick="closeArchive()" class="p-2 hover:bg-gray-200 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-            <div class="flex-1 overflow-auto"><table class="w-full text-left"><thead class="bg-gray-100 sticky top-0"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y text-[10px]"></tbody></table></div>
+    <div id="chartModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-6xl w-full p-6 h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6 border-b pb-2">
+                <h2 class="text-lg font-bold uppercase italic text-slate-800">Analytics Dashboard</h2>
+                <div class="flex gap-2">
+                    <button onclick="exportarPDFTabela()" class="bg-red-800 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2"><i data-lucide="file-text" class="w-3 h-3"></i> PDF Report</button>
+                    <button onclick="closeCharts()" class="text-2xl hover:text-red-500">&times;</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto p-4 flex-grow">
+                <div class="bg-gray-50 p-4 border rounded shadow-inner flex flex-col items-center">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Aging SLA</h3>
+                    <div class="chart-box"><canvas id="chartSla"></canvas></div>
+                </div>
+                <div class="bg-gray-50 p-4 border rounded shadow-inner flex flex-col items-center">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Subtipos</h3>
+                    <div class="chart-box"><canvas id="chartSubtipo"></canvas></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="formModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6 pb-4 border-b"><h2 id="modalTitle" class="text-xl font-bold text-indigo-900 uppercase italic">Manutenção</h2><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button></div>
-            <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div id="formModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h2 id="modalTitle" class="text-lg font-bold mb-6 border-b pb-2 uppercase italic text-blue-900">Manutenção</h2>
+            <form id="demandaForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <input type="hidden" id="editIndex">
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded-lg text-indigo-600 font-bold"></div>
-                <div class="md:col-span-2"><label class="block text-[10px] font-bold text-gray-400 uppercase">Texto Breve</label><input type="text" id="f-texto" class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-[10px] font-bold text-gray-400 uppercase">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded-lg"></div>
-                <div class="md:col-span-4"><label class="block text-[10px] font-bold text-indigo-600 uppercase">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-indigo-50 p-3 rounded-lg"></textarea></div>
-                <div class="md:col-span-4 flex justify-end gap-3 pt-4 border-t"><button type="button" onclick="closeModal()" class="px-6 py-2 text-gray-500 font-bold uppercase">Cancelar</button><button type="submit" class="bg-indigo-600 text-white px-8 py-2 rounded-lg font-bold uppercase shadow-lg">Salvar</button></div>
+                <div><label class="font-bold text-gray-400 italic">SLA Inicial</label><input type="number" id="f-sla" required class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">ReqC</label><input type="text" id="f-reqc" required class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Item</label><input type="text" id="f-item" required class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Nome Requisitante</label><input type="text" id="f-nome" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">WS</label><input type="text" id="f-ws" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">Subtipo</label><input type="text" id="f-sub" class="w-full border p-2 rounded text-blue-600 font-bold"></div>
+                <div class="md:col-span-2"><label class="font-bold text-gray-400 italic">Texto Breve</label><input type="text" id="f-texto" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">V. Unitário</label><input type="text" id="f-vunit" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
+                <div><label class="font-bold text-gray-400 italic">V. Total</label><input type="text" id="f-vtotal" oninput="maskMoney(this)" class="w-full border p-2 rounded"></div>
+                <div class="md:col-span-4"><label class="font-bold text-blue-600 italic underline">Observações</label><textarea id="f-obs" rows="3" class="w-full border bg-blue-50 p-2 rounded italic outline-none"></textarea></div>
+                <div class="md:col-span-4 flex justify-end gap-2 border-t pt-4"><button type="button" onclick="closeModal()" class="px-4 text-gray-400 font-bold uppercase">Cancelar</button><button type="submit" class="bg-slate-900 text-white px-8 py-2 rounded font-bold uppercase">Salvar</button></div>
             </form>
         </div>
     </div>
 
-    <div id="chartModal" class="hidden fixed inset-0 bg-gray-900/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <div class="w-full h-full flex flex-col">
-            <div class="flex justify-end mb-4"><button onclick="closeCharts()" class="text-white bg-white/20 p-2 rounded-full hover:bg-white/40"><i data-lucide="x"></i></button></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
-                <div class="bg-white rounded-2xl p-8 flex flex-col items-center"><h3 class="font-bold mb-4 uppercase text-gray-400">Aging SLA</h3><div class="w-full flex-1 relative"><canvas id="chartSlaFull"></canvas></div></div>
-                <div class="bg-white rounded-2xl p-8 flex flex-col items-center"><h3 class="font-bold mb-4 uppercase text-gray-400">Subtipos</h3><div class="w-full flex-1 relative"><canvas id="chartSubtipoFull"></canvas></div></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="userModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 uppercase italic">Novo Acesso</h2>
-            <div class="space-y-4">
-                <input type="text" id="new-user" placeholder="Login" class="w-full border p-3 rounded-xl"><input type="password" id="new-pass" placeholder="Senha" class="w-full border p-3 rounded-xl"><button onclick="cadastrarUsuario()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold uppercase">Cadastrar</button><button onclick="closeUserModal()" class="text-gray-400 text-sm mt-2 uppercase">Voltar</button>
-            </div>
+    <div id="archiveModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 z-50">
+        <div class="bg-white rounded-lg w-full max-w-[98%] p-6 h-[90vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-4 text-blue-900 font-bold uppercase italic"><h2>Histórico (Auto-Purge 15d)</h2><button onclick="closeArchive()" class="text-3xl">&times;</button></div>
+            <div class="overflow-x-auto border rounded flex-grow bg-gray-50"><table class="w-full text-left border-collapse"><thead class="bg-slate-200 uppercase font-bold sticky top-0 text-[10px]"><tr id="header-historico"></tr></thead><tbody id="tabela-historico" class="divide-y text-[9px] italic"></tbody></table></div>
         </div>
     </div>
 
@@ -167,27 +202,29 @@
         const API_URL = "https://sla-api.brunodalolio88.workers.dev"; 
         let authKey = localStorage.getItem("sla_auth");
         let currentUser = localStorage.getItem("sla_user") || "Usuário";
-        let tableFontSize = parseInt(localStorage.getItem("sla_font_size")) || 13;
-        let obsColor = localStorage.getItem("sla_obs_color") || "#9ca3af";
-        let demandas = []; let historico = []; 
-        let myCharts = { sla: null, sub: null };
-        let myChartsFull = { sla: null, sub: null };
+        
+        // Configurações Persistentes
+        let tableFontSize = parseInt(localStorage.getItem("sla_font_size")) || 11;
+        let obsColor = localStorage.getItem("sla_obs_color") || "#1e3a8a"; // Azul escuro padrão
+
+        let demandas = []; let historico = []; myCharts = { sla: null, sub: null };
+        let filtrosColuna = {};
+        let ordenacao = { coluna: null, direcao: 1 };
 
         window.onload = () => { 
             lucide.createIcons(); 
             if (authKey) { 
+                applyPreferences(); // Aplica cor e fonte salvas
                 updateProfile(currentUser);
-                applyPreferences();
                 document.getElementById('tela-login').classList.add('hidden'); 
-                document.getElementById('sidebar').classList.remove('hidden').classList.add('flex');
-                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('painel-principal').style.display = "block"; 
                 loadFromD1(); 
             } 
         };
 
-        // --- PREFERÊNCIAS DE VISUALIZAÇÃO ---
+        // --- PREFERÊNCIAS VISUAIS ---
         function applyPreferences() {
-            document.getElementById('tabela-main-container').style.fontSize = tableFontSize + "px";
+            document.getElementById('main-table').style.fontSize = tableFontSize + "px";
             document.getElementById('obsColorPicker').value = obsColor;
         }
 
@@ -195,144 +232,246 @@
             tableFontSize += delta;
             if(tableFontSize < 8) tableFontSize = 8;
             if(tableFontSize > 24) tableFontSize = 24;
-            document.getElementById('tabela-main-container').style.fontSize = tableFontSize + "px";
+            document.getElementById('main-table').style.fontSize = tableFontSize + "px";
             localStorage.setItem("sla_font_size", tableFontSize);
         }
 
         function updateObsColor(color) {
             obsColor = color;
             localStorage.setItem("sla_obs_color", color);
-            render(); // Re-renderiza para aplicar cor na coluna
+            render(); // Re-renderiza para aplicar a nova cor
         }
 
         // --- AVATAR E PERFIL ---
         function triggerAvatarUpload() { document.getElementById('avatarInput').click(); }
-        document.getElementById('avatarInput').onchange = (e) => {
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (evt) => { localStorage.setItem(`sla_avatar_${currentUser}`, evt.target.result); updateProfile(currentUser); };
+                reader.onload = function(evt) {
+                    localStorage.setItem(`sla_avatar_${currentUser}`, evt.target.result);
+                    updateProfile(currentUser);
+                };
                 reader.readAsDataURL(file);
             }
-        };
+        });
 
         function updateProfile(username) {
             currentUser = username;
-            document.getElementById('header-name').innerText = username;
-            document.getElementById('sidebar-name').innerText = username;
-            const saved = localStorage.getItem(`sla_avatar_${username}`);
-            const def = `https://ui-avatars.com/api/?name=${username}&background=6366f1&color=fff&bold=true`;
-            document.getElementById('header-avatar').src = saved || def;
-            document.getElementById('sidebar-avatar').src = saved || def;
+            document.getElementById('user-name-display').innerText = username;
+            
+            const savedAvatar = localStorage.getItem(`sla_avatar_${username}`);
+            // Avatar padrão com as iniciais do usuário
+            const defaultAvatar = `https://ui-avatars.com/api/?name=${username}&background=3b82f6&color=fff&bold=true`;
+            
+            document.getElementById('user-avatar-display').src = savedAvatar || defaultAvatar;
         }
 
-        // --- LOGIN E DADOS ---
+        // --- LOGIN E LÓGICA ---
         async function tentarLogin() {
             const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             if(!u || !p) return;
             const key = "Basic " + btoa(`${u}:${p}`);
-            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key } });
+            const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": key.replace("Basic ", "") } });
             if (res.status === 200) { 
-                authKey = key; localStorage.setItem("sla_auth", key); localStorage.setItem("sla_user", u);
-                updateProfile(u); document.getElementById('tela-login').classList.add('hidden'); 
-                document.getElementById('sidebar').classList.remove('hidden').classList.add('flex');
-                document.getElementById('main-content').classList.remove('hidden'); loadFromD1(); 
+                authKey = key.replace("Basic ", ""); 
+                localStorage.setItem("sla_auth", authKey); 
+                localStorage.setItem("sla_user", u); // Salva nome para exibir
+                updateProfile(u);
+                applyPreferences();
+                document.getElementById('tela-login').classList.add('hidden'); 
+                document.getElementById('painel-principal').style.display = "block"; loadFromD1(); 
             } else { document.getElementById('login-erro').classList.remove('hidden'); }
         }
 
-        function logout() { localStorage.clear(); window.location.reload(); }
-        async function loadFromD1() { try { const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } }); const data = await res.json(); demandas = data.filter(d => !d.status_final); historico = data.filter(d => d.status_final); render(); } catch (e) { console.error(e); } }
-        async function saveToD1(item) { await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) }); }
+        function logout() { localStorage.removeItem("sla_auth"); localStorage.removeItem("sla_user"); window.location.reload(); }
 
-        document.getElementById('fileInput').onchange = (e) => {
+        async function loadFromD1() {
+            try {
+                const res = await fetch(`${API_URL}/list`, { headers: { "Authorization": authKey } });
+                const data = await res.json();
+                demandas = data.filter(d => !d.status_final);
+                historico = data.filter(d => d.status_final);
+                executarAutoPurge();
+                render();
+            } catch (e) { console.error(e); }
+        }
+
+        async function executarAutoPurge() {
+            const hoje = new Date().setHours(0,0,0,0);
+            const QUINZE_DIAS_MS = 15 * 24 * 60 * 60 * 1000;
+            const itensParaDeletar = historico.filter(h => (hoje - h.data_referencia) > QUINZE_DIAS_MS);
+            if (itensParaDeletar.length > 0) {
+                for (let item of itensParaDeletar) {
+                    await fetch(`${API_URL}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ id: item.id }) });
+                }
+                loadFromD1();
+            }
+        }
+
+        async function saveToD1(item) {
+            await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(item) });
+        }
+
+        function limparMoedaImportacao(valor) {
+            if (valor === undefined || valor === null) return 0;
+            let str = String(valor).replace("R$", "").replace(/\s/g, "");
+            if (!isNaN(str) && str !== "") return parseFloat(str);
+            let limpo = str.replace(/\./g, "").replace(",", ".");
+            return parseFloat(limpo) || 0;
+        }
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
             const reader = new FileReader();
             reader.onload = async (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const hoje = new Date().setHours(0,0,0,0);
-                await fetch(`${API_URL}/clear_active`, { method: 'DELETE', headers: { "Authorization": authKey } });
-                const bulk = rows.map(n => ({
-                    sla_inicial: parseInt(n.SLA || n.sla || 0), data_referencia: hoje, reqc: String(n.ReqC || n.reqc || ''), 
-                    item: String(n.Item || n.item || '1'), nome: n['Nome do Requisitante'] || '', ws: n.WS || '', 
-                    subtipo: n.Subtipo || '', texto: n['Texto Breve'] || '', vunit: n['Valor Unitario'] || 0, 
-                    vtotal: n['Valor Total RC'] || 0, observacao: n.Observações || ''
-                })).filter(d => d.reqc);
-                await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                const mapaAtual = {};
+                demandas.forEach(d => { mapaAtual[String(d.reqc).trim()] = d; });
+                const reqcsNaPlanilha = new Set();
+                
+                const bulk = rows.map(n => {
+                    const r = String(n.ReqC || n.reqc || '').trim();
+                    if(!r) return null;
+                    reqcsNaPlanilha.add(r);
+                    const ex = mapaAtual[r];
+                    return {
+                        sla_inicial: parseInt(n.SLA || n.sla || 0),
+                        data_referencia: ex ? ex.data_referencia : hoje,
+                        reqc: r, item: String(n.Item || n.item || '1'),
+                        nome: (ex && ex.nome) ? ex.nome : (n['Nome do Requisitante'] || ''),
+                        ws: (ex && ex.ws) ? ex.ws : (n.WS || ''),
+                        subtipo: (ex && ex.subtipo) ? ex.subtipo : (n.Subtipo || ''),
+                        texto: (ex && ex.texto) ? ex.texto : (n['Texto Breve'] || ''),
+                        vunit: limparMoedaImportacao(n['Valor Unitario'] || n['Valor Unitário']),
+                        vtotal: limparMoedaImportacao(n['Valor Total RC']),
+                        observacao: (ex && ex.observacao) ? ex.observacao : (n.Observações || '')
+                    };
+                }).filter(d => d !== null);
+
+                const paraHistorico = [];
+                demandas.forEach(d => {
+                    if (!reqcsNaPlanilha.has(String(d.reqc).trim())) {
+                        let itemFim = { ...d };
+                        itemFim.status_final = "Concluído (Auto)";
+                        itemFim.sla_no_fim = calcularSlaAtual(d);
+                        itemFim.data_referencia = hoje;
+                        paraHistorico.push(itemFim);
+                    }
+                });
+
+                if (paraHistorico.length > 0 && confirm(`Detectamos ${paraHistorico.length} itens ausentes. Mover para histórico?`)) {
+                    for (let item of paraHistorico) { await saveToD1(item); }
+                }
+                if (bulk.length > 0) {
+                    await fetch(`${API_URL}/save_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify(bulk) });
+                }
+                alert("Sincronização concluída!");
                 loadFromD1();
             };
             reader.readAsBinaryString(e.target.files[0]);
-        };
+        });
 
-        const colunas = [{key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},{key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto Breve'},{key:'vunit',label:'V. Unit'},{key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}];
+        function setFiltro(key, value) { filtrosColuna[key] = value.toLowerCase(); render(); }
+        function alterarOrdem(col) {
+            if (ordenacao.coluna === col) { ordenacao.direcao *= -1; } else { ordenacao.coluna = col; ordenacao.direcao = 1; }
+            render();
+        }
+
+        const colunas = [
+            {key:'sla',label:'SLA'},{key:'reqc',label:'ReqC'},{key:'item',label:'Item'},{key:'nome',label:'Requisitante'},
+            {key:'ws',label:'WS'},{key:'subtipo',label:'Subtipo'},{key:'texto',label:'Texto'},{key:'vunit',label:'V. Unit'},
+            {key:'vtotal',label:'V. Total'},{key:'observacao',label:'Obs'}
+        ];
 
         function render() {
-            const busca = document.getElementById('inputBusca').value.toLowerCase();
+            const buscaGeral = document.getElementById('inputBusca').value.toLowerCase();
             const corpo = document.getElementById('tabela-corpo');
             const histBody = document.getElementById('tabela-historico');
-            document.getElementById('header-principal').innerHTML = colunas.map(c => `<th class="px-6 py-4 font-bold text-gray-400">${c.label}</th>`).join('') + '<th class="px-6 py-4 text-center font-bold text-gray-400">AÇÕES</th>';
-            document.getElementById('header-historico').innerHTML = `<th class="px-4 py-3">STATUS</th>` + colunas.map(c => `<th class="px-4 py-3">${c.label}</th>`).join('') + '<th class="px-4 py-3 text-center">AÇÃO</th>';
+            
+            document.getElementById('header-principal').innerHTML = colunas.map(c => `
+                <th class="p-3" onclick="alterarOrdem('${c.key}')">
+                    <div class="flex flex-col">
+                        <div class="flex items-center justify-between">
+                            <span>${c.label}</span>
+                            <span class="sort-icon">${ordenacao.coluna === c.key ? (ordenacao.direcao === 1 ? '▲' : '▼') : '↕'}</span>
+                        </div>
+                        <input type="text" class="filter-input" placeholder="..." onkeyup="setFiltro('${c.key}', this.value)" onclick="event.stopPropagation()" value="${filtrosColuna[c.key] || ''}">
+                    </div>
+                </th>
+            `).join('') + '<th class="p-3 text-center">Gestão</th>';
+
+            document.getElementById('header-historico').innerHTML = `<th class="p-3 text-blue-600">STATUS</th>` + colunas.map(c => `<th class="p-3">${c.label}</th>`).join('') + '<th class="p-3 text-center">AÇÃO</th>';
+            
             corpo.innerHTML = ""; histBody.innerHTML = "";
             let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 };
 
-            demandas.forEach((d, idx) => {
-                if (busca && !Object.values(d).some(v => String(v).toLowerCase().includes(busca))) return;
-                const sla = calcularSlaAtual(d);
-                let badge = "bg-blue-100 text-blue-700";
-                if (sla > 90) { badge = "bg-purple-100 text-purple-700"; counts.c91++; }
-                else if (sla > 60) { badge = "bg-red-100 text-red-700"; counts.c90++; }
-                else if (sla > 30) { badge = "bg-orange-100 text-orange-700"; counts.c60++; }
-                else if (sla > 15) { badge = "bg-yellow-100 text-yellow-700"; counts.c30++; }
+            let listaRender = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
+
+            listaRender = listaRender.filter(d => {
+                const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+                const matchesColunas = colunas.every(col => {
+                    const val = (col.key === 'sla') ? String(d.slaCalculado) : String(d[col.key] || '');
+                    return !filtrosColuna[col.key] || val.toLowerCase().includes(filtrosColuna[col.key]);
+                });
+                return matchesGeral && matchesColunas;
+            });
+
+            if (ordenacao.coluna) {
+                listaRender.sort((a, b) => {
+                    let vA = (ordenacao.coluna === 'sla') ? a.slaCalculado : (a[ordenacao.coluna] || '');
+                    let vB = (ordenacao.coluna === 'sla') ? b.slaCalculado : (b[ordenacao.coluna] || '');
+                    if (!isNaN(vA) && !isNaN(vB)) { vA = Number(vA); vB = Number(vB); }
+                    if (vA < vB) return -1 * ordenacao.direcao;
+                    if (vA > vB) return 1 * ordenacao.direcao;
+                    return 0;
+                });
+            }
+
+            listaRender.forEach((d) => {
+                let cor = "bg-blue-100 text-blue-700";
+                if (d.slaCalculado > 90) { cor = "bg-purple-100 text-purple-700"; counts.c91++; }
+                else if (d.slaCalculado > 60) { cor = "bg-red-100 text-red-700"; counts.c90++; }
+                else if (d.slaCalculado > 30) { cor = "bg-orange-100 text-orange-700"; counts.c60++; }
+                else if (d.slaCalculado > 15) { cor = "bg-yellow-100 text-yellow-700"; counts.c30++; }
                 else counts.c15++;
 
-                corpo.innerHTML += `<tr class="hover:bg-gray-50 border-b border-gray-100">
-                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badge}">${sla}d</span></td>
-                    <td class="px-6 py-4 font-bold text-gray-700">${d.reqc}</td>
-                    <td class="px-6 py-4">${d.item}</td>
-                    <td class="px-6 py-4 text-gray-500">${d.nome}</td>
-                    <td class="px-6 py-4 text-gray-500">${d.ws}</td>
-                    <td class="px-6 py-4"><span class="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">${d.subtipo}</span></td>
-                    <td class="px-6 py-4 col-texto text-gray-400 text-xs" title="${d.texto}">${d.texto}</td>
-                    <td class="px-6 py-4">${fmtMoeda(d.vunit)}</td>
-                    <td class="px-6 py-4 font-bold text-gray-700">${fmtMoeda(d.vtotal)}</td>
-                    <td class="px-6 py-4 col-obs italic text-xs" style="color: ${obsColor}" title="${d.observacao || ''}">${d.observacao || '-'}</td>
-                    <td class="px-6 py-4"><div class="flex items-center justify-center gap-2">
-                        <button onclick="setStatus(${demandas.indexOf(d)}, 'Concluído')" class="p-1 rounded bg-green-50 text-green-600">✔</button>
-                        <button onclick="setStatus(${demandas.indexOf(d)}, 'Cancelado')" class="p-1 rounded bg-red-50 text-red-600">✘</button>
-                        <button onclick="openEdit(${demandas.indexOf(d)})" class="p-1 rounded bg-blue-50 text-blue-600">✎</button>
-                    </div></td></tr>`;
+                const originalIdx = demandas.findIndex(orig => orig.reqc === d.reqc && orig.item === d.item);
+
+                // APLICAÇÃO DE ESTILOS DE COR E TOOLTIP
+                corpo.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b">
+                    <td class="p-3"><span class="px-2 py-0.5 rounded font-black border ${cor}">${d.slaCalculado}d</span></td>
+                    <td class="p-3 font-bold">${d.reqc}</td>
+                    <td class="p-3">${d.item}</td>
+                    <td class="p-3">${d.nome}</td>
+                    <td class="p-3">${d.ws}</td>
+                    <td class="p-3 text-blue-600 font-bold">${d.subtipo}</td>
+                    <td class="p-3 col-texto-breve text-[10px] text-slate-500" title="${d.texto}">${d.texto}</td>
+                    <td class="p-3">${fmtMoeda(d.vunit)}</td>
+                    <td class="p-3 font-bold">${fmtMoeda(d.vtotal)}</td>
+                    <td class="p-3 col-texto-breve italic font-medium" style="color: ${obsColor}" title="${d.observacao || ''}">${d.observacao || ''}</td>
+                    <td class="p-3 flex gap-1 justify-center">
+                        <button onclick="setStatus(${originalIdx}, 'Concluído')" class="text-emerald-600 font-bold">✔</button>
+                        <button onclick="setStatus(${originalIdx}, 'Cancelado')" class="text-red-600 font-bold ml-2">✘</button>
+                        <button onclick="openEdit(${originalIdx})" class="text-blue-600 font-bold ml-2 text-lg">✎</button>
+                    </td>
+                </tr>`;
             });
-            historico.forEach((h, idx) => { histBody.innerHTML += `<tr class="hover:bg-gray-50 border-b"><td class="px-4 py-3 font-bold ${h.status_final==='Concluído'?'text-green-700':'text-red-700'}">${h.status_final}</td><td class="px-4 py-3">${h.sla_no_fim}d</td><td class="px-4 py-3 font-bold">${h.reqc}</td><td class="px-4 py-3">${h.item}</td><td class="px-4 py-3">${h.nome}</td><td class="px-4 py-3">${h.ws}</td><td class="px-4 py-3">${h.subtipo}</td><td class="px-4 py-3 text-xs truncate max-w-[100px]">${h.texto}</td><td class="px-4 py-3">${fmtMoeda(h.vunit)}</td><td class="px-4 py-3 font-bold">${fmtMoeda(h.vtotal)}</td><td class="px-4 py-3 italic text-gray-400">${h.observacao || ''}</td><td class="px-4 py-3 text-center"><button onclick="reativar(${idx})" class="text-indigo-600 font-bold hover:underline">REATIVAR</button></td></tr>`; });
+
+            historico.forEach((h, idx) => {
+                histBody.innerHTML += `<tr class="border-b bg-white"><td class="p-3 font-black ${h.status_final.includes('Concluído')?'text-emerald-600':'text-red-500'} italic uppercase">${h.status_final}</td><td class="p-3 font-bold">${h.sla_no_fim}d</td><td class="p-3 font-bold">${h.reqc}</td><td class="p-3">${h.item}</td><td class="p-3">${h.nome}</td><td class="p-3">${h.ws}</td><td class="p-3 text-blue-500 font-bold">${h.subtipo}</td><td class="p-3 col-texto-breve text-[8px]" title="${h.texto}">${h.texto}</td><td class="p-3">${fmtMoeda(h.vunit)}</td><td class="p-3 font-bold text-slate-800">${fmtMoeda(h.vtotal)}</td><td class="p-3 italic text-slate-400" title="${h.observacao || ''}">${h.observacao || ''}</td><td class="p-3 text-center"><button onclick="reativar(${idx})" class="text-blue-600 font-black uppercase underline">Reativar</button></td></tr>`;
+            });
             document.getElementById('count-15').innerText = counts.c15; document.getElementById('count-30').innerText = counts.c30; document.getElementById('count-60').innerText = counts.c60; document.getElementById('count-90').innerText = counts.c90; document.getElementById('count-91').innerText = counts.c91;
-            lucide.createIcons(); updateCharts(counts, demandas, false);
-        }
-
-        // --- GRÁFICOS ---
-        function updateCharts(counts, data, isFull = false) {
-            const subMap = {}; data.forEach(d => { const s = d.subtipo || "Não Info"; subMap[s] = (subMap[s] || 0) + 1; });
-            const idSla = isFull ? 'chartSlaFull' : 'chartSla'; const idSub = isFull ? 'chartSubtipoFull' : 'chartSubtipo'; const chartObj = isFull ? myChartsFull : myCharts;
-            const ctxSla = document.getElementById(idSla); if(chartObj.sla) chartObj.sla.destroy();
-            chartObj.sla = new Chart(ctxSla, { type: 'bar', data: { labels: ['0-15', '16-30', '31-60', '61-90', '91+'], datasets: [{ label: 'Demandas', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#eab308', '#f97316', '#ef4444', '#9333ea'], borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
-            const ctxSub = document.getElementById(idSub); if(chartObj.sub) chartObj.sub.destroy();
-            chartObj.sub = new Chart(ctxSub, { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%' } });
-        }
-
-        function openCharts() { document.getElementById('chartModal').classList.remove('hidden'); let counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; demandas.forEach(d => { const sla = calcularSlaAtual(d); if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++; }); setTimeout(() => updateCharts(counts, demandas, true), 100); }
-        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
-
-        async function gerarPDF() {
-            const { jsPDF } = window.jspdf; const pdf = new jsPDF('l', 'mm', 'a4');
-            pdf.setFontSize(18); pdf.text("Relatório Executivo de SLA", 15, 15);
-            const imgSla = document.getElementById('chartSla').toDataURL('image/png', 1.0); const imgSub = document.getElementById('chartSubtipo').toDataURL('image/png', 1.0);
-            pdf.addImage(imgSla, 'PNG', 15, 30, 130, 60); pdf.addImage(imgSub, 'PNG', 160, 30, 120, 60);
-            pdf.autoTable({ startY: 100, head: [colunas.map(c => c.label)], body: demandas.map(d => [calcularSlaAtual(d)+"d", d.reqc, d.item, d.nome, d.ws, d.subtipo, d.texto, fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao]), theme: 'striped', styles: { fontSize: 7 } });
-            pdf.save("Dashboard_SLA.pdf");
+            lucide.createIcons();
         }
 
         function maskMoney(c) { let v = c.value.replace(/\D/g, ""); v = (v/100).toFixed(2); v = v.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); c.value = v ? "R$ " + v : ""; }
         function parseNum(t) { return parseFloat(String(t).replace("R$ ", "").replace(/\./g, "").replace(",", ".")) || 0; }
         function fmtMoeda(n) { return "R$ " + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
         function calcularSlaAtual(item) { const base = parseInt(item.sla_inicial); const v = isNaN(base) ? 0 : base; if (item.sla_no_fim !== undefined) return item.sla_no_fim; return v + Math.floor((new Date().setHours(0,0,0,0) - item.data_referencia) / 86400000); }
-        async function setStatus(idx, s) { if(!confirm(`Confirmar: ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); await saveToD1(item); loadFromD1(); }
+        async function setStatus(idx, s) { if(!confirm(`Marcar como ${s}?`)) return; let item = demandas[idx]; item.status_final = s; item.sla_no_fim = calcularSlaAtual(item); item.data_referencia = new Date().setHours(0,0,0,0); await saveToD1(item); loadFromD1(); }
         async function reativar(idx) { if(!confirm("Reativar demanda?")) return; let item = historico[idx]; item.data_referencia = new Date().setHours(0,0,0,0); item.sla_inicial = item.sla_no_fim; delete item.sla_no_fim; delete item.status_final; await saveToD1(item); loadFromD1(); }
 
         document.getElementById('demandaForm').onsubmit = async (e) => {
@@ -341,14 +480,61 @@
             await saveToD1(data); closeModal(); loadFromD1();
         };
 
-        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('formModal').classList.remove('hidden'); }
-        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || ''; document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || ''; document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); }
+        function openAddModal() { document.getElementById('demandaForm').reset(); document.getElementById('editIndex').value = ""; document.getElementById('f-reqc').readOnly = false; document.getElementById('modalTitle').innerText = "Adicionar Demanda Manual"; document.getElementById('formModal').classList.remove('hidden'); }
+        function openEdit(idx) { const d = demandas[idx]; document.getElementById('editIndex').value = idx; document.getElementById('modalTitle').innerText = "Editar Registro"; document.getElementById('f-sla').value = d.sla_inicial; document.getElementById('f-reqc').value = d.reqc; document.getElementById('f-reqc').readOnly = true; document.getElementById('f-item').value = d.item; document.getElementById('f-nome').value = d.nome || ''; document.getElementById('f-ws').value = d.ws || ''; document.getElementById('f-sub').value = d.subtipo || ''; document.getElementById('f-texto').value = d.texto || ''; document.getElementById('f-vunit').value = fmtMoeda(d.vunit); document.getElementById('f-vtotal').value = fmtMoeda(d.vtotal); document.getElementById('f-obs').value = d.observacao || ''; document.getElementById('formModal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('formModal').classList.add('hidden'); }
         function openArchive() { document.getElementById('archiveModal').classList.remove('hidden'); }
         function closeArchive() { document.getElementById('archiveModal').classList.add('hidden'); }
-        function openUserModal() { document.getElementById('userModal').classList.remove('hidden'); }
-        function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
-        async function cadastrarUsuario() { const u = document.getElementById('new-user').value; const p = document.getElementById('new-pass').value; await fetch(`${API_URL}/save_user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authKey }, body: JSON.stringify({ username: u, password: p }) }); alert("Autorizado!"); closeUserModal(); }
+        
+        // --- FUNÇÕES GRÁFICOS E PDF ---
+        function exportarExcel() {
+            // ... (Mesma lógica de exportação, mantida do original)
+            const buscaGeral = document.getElementById('inputBusca').value.toLowerCase();
+            let listaExcel = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
+            listaExcel = listaExcel.filter(d => {
+                const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+                return matchesGeral;
+            });
+            const wsData = listaExcel.map(d => ({ "SLA": d.slaCalculado + "d", "ReqC": d.reqc, "Item": d.item, "Requisitante": d.nome, "WS": d.ws, "Subtipo": d.subtipo, "Texto": d.texto, "V. Unit": fmtMoeda(d.vunit), "V. Total": fmtMoeda(d.vtotal), "Obs": d.observacao }));
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Demandas");
+            XLSX.writeFile(wb, `SLA_Export_${new Date().toLocaleDateString()}.xlsx`);
+        }
+
+        function exportarPDFTabela() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            const buscaGeral = document.getElementById('inputBusca').value.toLowerCase();
+            let listaPdf = demandas.map(d => ({ ...d, slaCalculado: calcularSlaAtual(d) }));
+            listaPdf = listaPdf.filter(d => {
+                const matchesGeral = !buscaGeral || Object.values(d).concat(d.slaCalculado).some(v => String(v).toLowerCase().includes(buscaGeral));
+                return matchesGeral;
+            });
+            pdf.setFontSize(14);
+            pdf.text("RELATÓRIO DE DEMANDAS ATIVAS - SLA MESTRE", 15, 12);
+            const headers = [colunas.map(c => c.label)];
+            const body = listaPdf.map(d => [ d.slaCalculado + "d", d.reqc, d.item, d.nome || "-", d.ws || "-", d.subtipo || "-", d.texto || "-", fmtMoeda(d.vunit), fmtMoeda(d.vtotal), d.observacao || "" ]);
+            pdf.autoTable({ startY: 22, head: headers, body: body, theme: 'grid', styles: { fontSize: 5.5, overflow: 'linebreak' }, columnStyles: { 6: { cellWidth: 50 }, 9: { cellWidth: 40 } } });
+            pdf.save(`SLA_Painel_${new Date().toLocaleDateString()}.pdf`);
+        }
+
+        function openCharts() {
+            document.getElementById('chartModal').classList.remove('hidden');
+            const counts = { c15:0, c30:0, c60:0, c90:0, c91:0 }; const subMap = {};
+            demandas.forEach(d => {
+                const sla = calcularSlaAtual(d);
+                if (sla > 90) counts.c91++; else if (sla > 60) counts.c90++; else if (sla > 30) counts.c60++; else if (sla > 15) counts.c30++; else counts.c15++;
+                const s = d.subtipo || "Não Info"; subMap[s] = (subMap[s] || 0) + 1;
+            });
+            setTimeout(() => {
+                if(myCharts.sla) myCharts.sla.destroy();
+                myCharts.sla = new Chart(document.getElementById('chartSla'), { type: 'bar', data: { labels: ['0-15','16-30','31-60','61-90','91+'], datasets: [{ label: 'Qtd', data: [counts.c15, counts.c30, counts.c60, counts.c90, counts.c91], backgroundColor: ['#3b82f6', '#facc15', '#f97316', '#ef4444', '#7e22ce'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+                if(myCharts.sub) myCharts.sub.destroy();
+                myCharts.sub = new Chart(document.getElementById('chartSubtipo'), { type: 'doughnut', data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#1e293b','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
+            }, 300);
+        }
+        function closeCharts() { document.getElementById('chartModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
